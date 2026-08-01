@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>吴文嘉 · 小学教育简历</title>
+  <style>
+    /* ----- 全局变量 & 基础重置 ----- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #2c5f2d;
+      --primary-light: #4c8b4c;
+      --secondary: #f5b042;
+      --secondary-soft: #fde7c4;
+      --bg: #f9fafb;
+      --surface: #ffffff;
+      --text: #1e2b2c;
+      --text-secondary: #4b5c5e;
+      --border: #e2e8e8;
+      --shadow-sm: 0 4px 12px rgba(0,0,0,0.04);
+      --shadow-card: 0 12px 28px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+      --radius-md: 1rem;
+      --radius-lg: 1.5rem;
+      --transition: 0.2s ease;
+      --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body.dark {
+      --bg: #0f1a1a;
+      --surface: #1b2a2a;
+      --text: #e1f0ec;
+      --text-secondary: #b0c7c3;
+      --border: #2f4440;
+      --shadow-sm: 0 4px 12px rgba(0,20,15,0.3);
+      --shadow-card: 0 12px 28px rgba(0,0,0,0.4);
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      transition: background 0.25s, color 0.25s;
+      padding-top: 70px;
+      scroll-behavior: smooth;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ----- 导航栏 ----- */
+    .nav-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(10px);
+      background: rgba(249, 250, 251, 0.85);
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+    body.dark .nav-bar {
+      background: rgba(15, 26, 26, 0.9);
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.3rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 0.4rem 0.2rem;
+      border-bottom: 2px solid transparent;
+      transition: color var(--transition), border-color var(--transition);
+      white-space: nowrap;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 2rem;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: var(--surface);
+      transition: all var(--transition);
+    }
+    .icon-btn:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .print-btn {
+      background: var(--secondary);
+      color: #1e2b2c;
+      border-color: var(--secondary);
+      font-weight: 600;
+    }
+    .print-btn:hover {
+      background: #e39e30;
+      color: #0f1a1a;
+    }
+
+    /* ----- Hero 区域 ----- */
+    .hero {
+      padding: 2.5rem 0 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      background: linear-gradient(135deg, rgba(44,95,45,0.04) 0%, rgba(245,176,66,0.06) 100%);
+      border-radius: var(--radius-lg);
+      margin: 1rem 0 2rem;
+    }
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .hero .sub {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      max-width: 650px;
+      margin: 0.8rem 0 1.2rem;
+    }
+    .badge-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.6rem;
+      margin: 1rem 0 1.4rem;
+    }
+    .badge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.3rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+    .contact-row {
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.6rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: background var(--transition), transform var(--transition);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+    }
+    .btn:hover {
+      background: var(--primary-light);
+      transform: translateY(-1px);
+    }
+    .btn-outline:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* ----- 通用卡片与布局 ----- */
+    .section {
+      margin: 2.8rem 0;
+    }
+    .section-title {
+      font-size: 1.7rem;
+      font-weight: 650;
+      margin-bottom: 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--primary);
+    }
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-card);
+      transition: transform 0.2s ease, box-shadow 0.2s;
+      border: 1px solid var(--border);
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 30px rgba(0,0,0,0.08);
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.8rem;
+      align-items: start;
+    }
+
+    /* ----- 标签页组件 ----- */
+    .tabs {
+      display: flex;
+      gap: 0.4rem;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1.8rem;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 0.6rem 1.4rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 2rem 2rem 0 0;
+      transition: 0.2s;
+      font-size: 0.95rem;
+    }
+    .tab-btn[aria-selected="true"] {
+      color: var(--primary);
+      background: rgba(44,95,45,0.08);
+      border-bottom: 3px solid var(--primary);
+    }
+    .tab-panel {
+      display: none;
+      animation: fade 0.25s ease;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+    @keyframes fade { from { opacity: 0.3; } to { opacity: 1; } }
+
+    /* 时间线 */
+    .timeline-item {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-left: 0.5rem;
+      border-left: 3px solid var(--secondary);
+    }
+    .timeline-content h4 {
+      font-weight: 700;
+    }
+    .meta {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin: 0.2rem 0 0.5rem;
+    }
+
+    .skill-bar {
+      margin: 0.8rem 0;
+    }
+    .skill-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-bottom: 0.2rem;
+    }
+    .progress {
+      height: 8px;
+      background: var(--border);
+      border-radius: 1rem;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      width: 0%;
+      border-radius: 1rem;
+    }
+
+    /* 图片卡片样式 */
+    .image-card {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border);
+      transition: transform 0.2s;
+    }
+    .image-card:hover {
+      transform: translateY(-4px);
+    }
+    .image-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: contain;
+      background: #f4f6f6;
+    }
+    body.dark .image-card img {
+      background: #1e2f2f;
+    }
+    .image-caption {
+      padding: 0.8rem 1rem;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--surface);
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0 1.5rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+
+    #back-to-top {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      font-size: 1.4rem;
+      cursor: pointer;
+      box-shadow: var(--shadow-card);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width: 640px) {
+      .nav-links a { font-size: 0.75rem; }
+      .hero h1 { font-size: 2rem; }
+    }
+
+    @media print {
+      body { padding-top: 0; background: white; }
+      .nav-bar, #back-to-top, .icon-btn, .print-btn { display: none; }
+      .card, .image-card { box-shadow: none; border: 1px solid #ccc; }
+      .tabs { border-bottom: none; }
+      .tab-panel { display: block !important; opacity: 1; margin-bottom: 1.5rem; }
+      .image-card img { max-height: 300px; object-fit: contain; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav-bar">
+    <div class="nav-inner">
+      <span class="logo">📘 吴文嘉</span>
+      <div class="nav-links">
+        <a href="#hero">关于</a>
+        <a href="#highlights">亮点</a>
+        <a href="#experience">经历</a>
+        <a href="#projects">项目</a>
+        <a href="#skills">技能</a>
+        <a href="#certificates">证书</a>
+        <a href="#education">教育</a>
+        <button id="themeToggle" class="icon-btn" aria-label="切换深色模式">🌓 模式</button>
+        <button id="printBtn" class="icon-btn print-btn">🖨️ 打印</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" id="mainContent">
+    <!-- 动态js渲染 -->
+  </main>
+
+  <button id="back-to-top" aria-label="返回顶部">↑</button>
+  
+  <footer>
+    <p>© 2026 吴文嘉 · 更新于2026.07 · 教育创造可能</p>
+  </footer>
+
+  <script>
+    (function() {
+      // ----- 简历数据 -----
+      const resume = {
+        name: "吴文嘉",
+        title: "小学教育专业 · 2028届应届生",
+        email: "wuwenjia12@qq.com",
+        phone: "18857322605",
+        summary: "杭州师范大学小学教育专业在读，深耕AI赋能教育、课程设计与数字素养。累计产出教学材料50+份，实践微格教学120+课时，致力于用技术推动个性化教育。",
+        keywords: ["AI教育应用", "课程开发", "微课制作", "数据分析", "项目式学习"],
+        highlights: [
+          { metric: "50+", desc: "AI辅助教学材料产出" },
+          { metric: "120+", desc: "微格教学实训课时" },
+          { metric: "200+", desc: "个人阅读卡片知识库" },
+          { metric: "10+", desc: "独立制作微课视频" }
+        ],
+        experienceTabs: {
+          "校园实践": [
+            {
+              role: "微格教学实训负责人",
+              org: "杭州师范大学 · 教育学院",
+              period: "2025.09 – 2026.06",
+              details: ["累计完成120+课时差异化教学模拟", "获指导教师‘课堂教学组织能力突出’书面评价", "设计小学高段主题式探究课程方案3套"]
+            },
+            {
+              role: "AI教育探索者",
+              org: "个人研究项目",
+              period: "2024.12 – 至今",
+              details: ["整理AI教育应用案例30+个", "利用生成式AI辅助教案撰写与PPT生成", "内容准备效率提升约40%"]
+            }
+          ],
+          "实习经历": [
+            {
+              role: "教学资源开发(模拟)",
+              org: "课程与教学论项目",
+              period: "2025.03 – 2025.07",
+              details: ["运用Canva/剪映制作微课视频10+节", "完成小学语文整本书阅读指导手册初稿"]
+            }
+          ]
+        },
+        projects: [
+          {
+            name: "AI辅助阅读素养课程",
+            stack: "生成式AI · 课程设计",
+            desc: "利用大模型进行数字化整理与结构化重构，编撰整本书阅读指导手册。",
+          },
+          {
+            name: "个性化评语生成器",
+            stack: "Prompt Engineering",
+            desc: "设计AI提示词模板，实现差异化评语与学习路径建议，收录于个人知识库。",
+          },
+          {
+            name: "跨学科主题探究方案",
+            stack: "项目式学习 · 科学/语文融合",
+            desc: "自主设计3套小学高段探究课程，覆盖多学科领域。"
+          }
+        ],
+        skills: {
+          "人工智能应用": 85,
+          "数字素养(剪映/Canva)": 80,
+          "数据分析(Excel/AI)": 70,
+          "课程开发与研究": 82,
+          "课堂组织与德育": 88
+        },
+        certificates: [
+          { name: "阿里云人工智能训练师认证", image: "证书.png", desc: "阿里云 · 2025 | 系统学习机器学习基础、数据标注与AI模型训练" }
+        ],
+        education: {
+          school: "杭州师范大学",
+          degree: "小学教育专业 · 教育学学士",
+          period: "2024.09 – 2028.06（预计）",
+          note: "核心课程：教育心理学、课程与教学论、儿童发展、班级管理。GPA待更新。"
+        }
+      };
+
+      // ----- 渲染函数 -----
+      const main = document.getElementById('mainContent');
+      
+      function renderAll() {
+        let html = '';
+        // Hero
+        html += `
+          <section id="hero" class="hero">
+            <h1>${resume.name}</h1>
+            <p class="sub">${resume.summary}</p>
+            <div class="badge-group">
+              ${resume.keywords.map(k => `<span class="badge">${k}</span>`).join('')}
+            </div>
+            <div class="contact-row">
+              <button class="btn" id="copyEmailBtn">📋 复制邮箱</button>
+              <a class="btn btn-outline" href="tel:${resume.phone}">📞 ${resume.phone}</a>
+            </div>
+          </section>
+        `;
+
+        // 亮点
+        html += `<section id="highlights" class="section"><h2 class="section-title">✨ 亮点成果</h2><div class="grid-3">`;
+        resume.highlights.forEach(h => {
+          html += `<div class="card"><h3 style="font-size:2rem;color:var(--primary);">${h.metric}</h3><p>${h.desc}</p></div>`;
+        });
+        html += `</div></section>`;
+
+        // 经历 Tabs
+        html += `<section id="experience" class="section"><h2 class="section-title">📌 经历</h2>`;
+        const tabKeys = Object.keys(resume.experienceTabs);
+        html += `<div class="tabs" role="tablist" aria-label="经历分类">`;
+        tabKeys.forEach((key, idx) => {
+          html += `<button class="tab-btn" role="tab" aria-selected="${idx===0}" data-tab="${key}">${key}</button>`;
+        });
+        html += `</div>`;
+        tabKeys.forEach((key, idx) => {
+          html += `<div class="tab-panel ${idx===0 ? 'active' : ''}" role="tabpanel" data-panel="${key}">`;
+          resume.experienceTabs[key].forEach(item => {
+            html += `<div class="timeline-item"><div class="timeline-content"><h4>${item.role}</h4><div class="meta">${item.org} | ${item.period}</div><ul>${item.details.map(d=>`<li>${d}</li>`).join('')}</ul></div></div>`;
+          });
+          html += `</div>`;
+        });
+        html += `</section>`;
+
+        // 项目
+        html += `<section id="projects" class="section"><h2 class="section-title">📁 项目精选</h2><div class="grid-3">`;
+        resume.projects.forEach(p => {
+          html += `<div class="card"><h4>${p.name}</h4><p class="meta" style="margin:0.4rem 0">${p.stack}</p><p>${p.desc}</p></div>`;
+        });
+        html += `</div></section>`;
+
+        // 技能矩阵
+        html += `<section id="skills" class="section"><h2 class="section-title">🧠 技能矩阵</h2><div class="card" style="max-width:700px;">`;
+        for (let [skill, val] of Object.entries(resume.skills)) {
+          html += `<div class="skill-bar"><div class="skill-label"><span>${skill}</span><span>${val}%</span></div><div class="progress"><div class="progress-fill" style="width:${val}%;"></div></div></div>`;
+        }
+        html += `</div></section>`;
+
+        // 证书集 (图片展示)
+        html += `<section id="certificates" class="section"><h2 class="section-title">🏅 证书与认证</h2>`;
+        if (resume.certificates && resume.certificates.length > 0) {
+          html += `<div class="grid-2">`;
+          resume.certificates.forEach(cert => {
+            html += `
+              <div class="image-card">
+                <img src="${cert.image}" alt="${cert.name}" loading="lazy" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback-text').style.display='flex';">
+                <div class="fallback-text" style="display:none; padding:2rem; justify-content:center; align-items:center; background:#eef2f2; color:var(--text-secondary);">📄 证书图片加载失败</div>
+                <div class="image-caption">${cert.name}</div>
+                <div style="padding:0 1rem 1rem; font-size:0.9rem; color:var(--text-secondary);">${cert.desc || ''}</div>
+              </div>
+            `;
+          });
+          html += `</div>`;
+        } else {
+          html += `<p class="meta">暂无证书图片展示</p>`;
+        }
+        html += `</section>`;
+
+        // 教育
+        html += `<section id="education" class="section"><h2 class="section-title">🎓 教育背景</h2><div class="card"><h4>${resume.education.school}</h4><p>${resume.education.degree}</p><p class="meta">${resume.education.period}</p><p>${resume.education.note}</p></div></section>`;
+        
+        main.innerHTML = html;
+
+        // 绑定事件
+        attachEvents();
+      }
+
+      function attachEvents() {
+        // 邮箱复制防爬虫
+        const copyBtn = document.getElementById('copyEmailBtn');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', () => {
+            const email = ['wuwenjia12', 'qq.com'].join('@');
+            navigator.clipboard?.writeText(email).then(() => {
+              alert('邮箱已复制：' + email);
+            }).catch(() => {
+              prompt('手动复制邮箱', email);
+            });
+          });
+        }
+
+        // Tabs 交互
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const panels = document.querySelectorAll('.tab-panel');
+        tabButtons.forEach(btn => {
+          btn.addEventListener('click', function() {
+            const tabKey = this.dataset.tab;
+            tabButtons.forEach(b => b.setAttribute('aria-selected', 'false'));
+            this.setAttribute('aria-selected', 'true');
+            panels.forEach(p => p.classList.remove('active'));
+            const activePanel = document.querySelector(`.tab-panel[data-panel="${tabKey}"]`);
+            if (activePanel) activePanel.classList.add('active');
+          });
+          btn.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+              e.preventDefault();
+              const siblings = Array.from(tabButtons);
+              const idx = siblings.indexOf(e.target);
+              const next = e.key === 'ArrowRight' ? (idx+1)%siblings.length : (idx-1+siblings.length)%siblings.length;
+              siblings[next].focus();
+              siblings[next].click();
+            }
+          });
+        });
+      }
+
+      // 主题切换
+      document.getElementById('themeToggle').addEventListener('click', () => {
+        document.body.classList.toggle('dark');
+      });
+
+      // 打印
+      document.getElementById('printBtn').addEventListener('click', () => {
+        window.print();
+      });
+
+      // 返回顶部
+      const backBtn = document.getElementById('back-to-top');
+      window.addEventListener('scroll', () => {
+        backBtn.style.display = window.scrollY > 400 ? 'flex' : 'none';
+      });
+      backBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
+
+      // 平滑滚动
+      document.querySelectorAll('.nav-links a[href^="#"]').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = document.querySelector(link.getAttribute('href'));
+          if (target) target.scrollIntoView({ behavior: 'smooth' });
+        });
+      });
+
+      // 动效尊重
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.style.setProperty('--transition', '0s');
+      }
+
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
+      
+    
+    
+    
+
+   
+ 
+   
+   
+   
+     
+      
