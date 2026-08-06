@@ -1,0 +1,630 @@
+/* =========================================================
+   ScrollStack (Native) · 卡片堆叠滚动组件样式 · 纯静态版 v2
+   对应 JS: ScrollStack.native.js
+   - 桌面 / 平板 / 手机 三段断点
+   - touch-action + safe-area + prefers-reduced-motion
+   - v2 新增：统一 Portfolio 栏目模式（ai-card + ai-practice-wrap）
+   ========================================================= */
+
+.scroll-stack-scroller {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  overscroll-behavior-x: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  touch-action: pan-y;
+  -ms-touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  isolation: isolate;
+}
+.scroll-stack-scroller.scroll-stack--use-window-scroll {
+  overflow: visible;
+  height: auto;
+  min-height: 0;
+  overscroll-behavior: auto;
+  touch-action: auto;
+}
+/* v2 新增：在外层 ai-practice-wrap（黑灰背景）里做内滑时，scroller 背景透明且不再写自己的阴影 */
+.scroll-stack-scroller.scroll-stack--inherit-outer {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.scroll-stack-inner {
+  padding: 14vh 3.5rem 22vh;
+  min-height: 100%;
+  position: relative;
+  box-sizing: border-box;
+  will-change: transform;
+}
+
+.scroll-stack-card {
+  transform-origin: top center;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  height: 20rem;
+  width: 100%;
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 3rem;
+  border-radius: 40px;
+  box-sizing: border-box;
+  box-shadow: 0 20px 60px -20px rgba(20, 24, 60, 0.22),
+              0 2px 8px rgba(20, 24, 60, 0.06);
+  background: #fff;
+  position: relative;
+  will-change: auto;
+  isolation: isolate;
+  -webkit-user-select: text;
+  user-select: text;
+  touch-action: pan-y;
+}
+
+/* 内容驱动卡高（证书专栏用） */
+.scroll-stack--content-height .scroll-stack-card--content,
+.scroll-stack-card--content {
+  height: auto;
+  min-height: 18rem;
+  max-height: 70vh;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 平板 */
+@media (min-width: 640px) and (max-width: 1024px) {
+  .scroll-stack-inner { padding: 14vh 2.5rem 20vh; }
+  .scroll-stack-card {
+    height: 22rem;
+    padding: 2.4rem 2.4rem;
+    border-radius: 28px;
+    margin: 22px auto;
+  }
+  .scroll-stack--content-height .scroll-stack-card--content,
+  .scroll-stack-card--content { height: auto; min-height: 18rem; }
+}
+/* 手机：证书专栏重点优化 */
+@media (max-width: 639.98px) {
+  .scroll-stack-scroller { min-height: 360px; }
+  .scroll-stack-inner {
+    padding: 10vh 1.15rem 16vh;
+    padding-left: calc(1.15rem + env(safe-area-inset-left, 0));
+    padding-right: calc(1.15rem + env(safe-area-inset-right, 0));
+  }
+  .scroll-stack-card {
+    height: 22rem;
+    padding: 1.4rem 1.15rem;
+    border-radius: 20px;
+    margin: 16px auto;
+    box-shadow: 0 14px 36px -14px rgba(20, 24, 60, 0.22),
+                0 2px 6px rgba(20, 24, 60, 0.06);
+  }
+  .scroll-stack-card--mobile { border-radius: 20px !important; }
+  .scroll-stack--content-height .scroll-stack-card--content,
+  .scroll-stack-card--content {
+    height: auto !important;
+    min-height: 16rem;
+    max-height: 78vh;
+  }
+}
+
+.scroll-stack-end {
+  width: 100%;
+  height: 90vh;
+  height: calc(90vh + env(safe-area-inset-bottom, 0));
+  pointer-events: none;
+}
+@media (max-width: 639.98px) {
+  .scroll-stack-end {
+    height: 62vh;
+    height: calc(62vh + env(safe-area-inset-bottom, 0));
+  }
+}
+
+/* 降低合成：reduced-motion 或低端机时关闭 3D/透视 */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-stack-scroller { scroll-behavior: auto; }
+  .scroll-stack-card {
+    transform-style: flat;
+    -webkit-transform-style: flat;
+    backface-visibility: visible;
+    perspective: none;
+    -webkit-perspective: none;
+    will-change: auto;
+    transition: none;
+  }
+  .scroll-stack-inner { will-change: auto; }
+}
+
+/* 打印：证书友好 */
+@media print {
+  .scroll-stack-scroller { overflow: visible !important; height: auto !important; }
+  .scroll-stack-card {
+    transform: none !important; filter: none !important;
+    box-shadow: 0 0 0 1px #ddd !important;
+    break-inside: avoid; margin: 12px 0 !important;
+    height: auto !important; min-height: 0 !important; max-height: none !important;
+  }
+  .scroll-stack-end { display: none !important; }
+}
+
+/* =========================================================
+   CertStack (Native) · 默认卡片样式（v2 向后兼容旧组件）
+   对应 JS: initCertStack( unifiedPortfolioMode:false )
+   ========================================================= */
+
+.cert-stack-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 0;
+  box-sizing: border-box;
+  height: 86vh;
+  max-height: 880px;
+  display: flex;
+  flex-direction: column;
+  padding-left: calc(1rem + env(safe-area-inset-left, 0));
+  padding-right: calc(1rem + env(safe-area-inset-right, 0));
+}
+.cert-stack-wrap--window { height: auto; max-height: none; }
+
+.cert-stack-header {
+  max-width: 960px;
+  margin: 0 auto 1rem;
+  width: 100%;
+  padding: 0 0 0.5rem;
+  flex: none;
+}
+.cert-stack-tag {
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  color: rgba(20, 24, 60, 0.55);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.cert-stack-title {
+  font-size: clamp(1.6rem, 3.6vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #14183c;
+  margin: 0 0 0.4rem;
+  line-height: 1.2;
+}
+.cert-stack-title-dot { color: #ff5a3c; margin-left: 2px; }
+.cert-stack-sub {
+  margin: 0;
+  color: rgba(20, 24, 60, 0.55);
+  font-size: 0.92rem;
+}
+
+.cert-stack-scroller {
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: 24px;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(150, 170, 255, 0.08), transparent 60%),
+    radial-gradient(800px 400px at 110% 10%, rgba(255, 180, 120, 0.08), transparent 60%),
+    #f8f9ff;
+  box-shadow:
+    inset 0 0 0 1px rgba(20, 24, 60, 0.05),
+    0 20px 40px -24px rgba(20, 24, 60, 0.22);
+}
+
+/* v2 新增：统一 Portfolio 模式时，mount 高度由外层 ai-practice-wrap 撑，不再重复写圆角背景 */
+.cert-stack--unified {
+  width: 100%;
+  height: 100% !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  background: transparent;
+}
+.cert-stack--unified .cert-stack-scroller {
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* 在 ai-practice-wrap（圆角 24px）里，scroller 的滚动内容不要露到圆角外面 */
+.ai-practice-wrap > .cert-stack--unified {
+  overflow: hidden;
+}
+
+.cert-stack-card {
+  background: #fff;
+  border: 1px solid rgba(20, 24, 60, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  cursor: pointer;
+}
+.cert-stack-card-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  width: 100%;
+  height: 100%;
+}
+.cert-stack-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex: none;
+}
+.cert-stack-index {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: rgba(20, 24, 60, 0.5);
+  letter-spacing: 0.08em;
+}
+.cert-stack-badge {
+  background: linear-gradient(135deg, #ff5a3c, #ffa64d);
+  color: #fff;
+  padding: 0.22rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.cert-stack-name {
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 700;
+  line-height: 1.35;
+  color: #14183c;
+  flex: none;
+}
+.cert-stack-cover {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(150, 170, 255, 0.18), rgba(255, 200, 170, 0.18)),
+    repeating-linear-gradient(45deg, rgba(20, 24, 60, 0.03) 0 12px, transparent 12px 24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.cert-stack-cover > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+}
+.cert-stack-cover-placeholder {
+  color: rgba(20, 24, 60, 0.4);
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+}
+.cert-stack-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #3f54ff;
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-decoration: none;
+  flex: none;
+  align-self: flex-end;
+  padding: 0.15rem 0.1rem;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.cert-stack-link:hover { background: rgba(63, 84, 255, 0.08); }
+
+/* 平板（旧样式） */
+@media (min-width: 640px) and (max-width: 1024px) {
+  .cert-stack-wrap { height: 82vh; max-height: 760px; }
+  .cert-stack-card { gap: 0.5rem; }
+}
+/* 手机：核心优化（旧样式） */
+@media (max-width: 639.98px) {
+  .cert-stack-wrap {
+    height: 78vh;
+    max-height: none;
+    padding: 1rem 0.75rem 0;
+  }
+  .cert-stack-header { margin-bottom: 0.5rem; }
+  .cert-stack-sub { font-size: 0.85rem; }
+  .cert-stack-scroller { border-radius: 18px; }
+  .cert-stack-card,
+  .cert-stack-card-inner { gap: 0.5rem; }
+  .cert-stack-name { font-size: 1rem; line-height: 1.4; }
+  .cert-stack-badge { font-size: 0.68rem; padding: 0.2rem 0.6rem; }
+  .cert-stack-cover { border-radius: 10px; min-height: 140px; }
+  .cert-stack-link { font-size: 0.8rem; padding: 0.1rem; }
+}
+@media (max-width: 379px) {
+  .cert-stack-wrap { height: 80vh; }
+  .cert-stack-name { font-size: 0.95rem; }
+  .cert-stack-cover { min-height: 120px; }
+}
+
+/* =========================================================
+   v2 新增：证书 ai-card 风格（与上方 3 个栏目完全对齐）
+   对应 JS: buildCertAICard() + initCertStack( unifiedPortfolioMode:true )
+   ========================================================= */
+
+/* 因为 scroll-stack-card 原本写了白色 background，这里覆盖成和 ai-card 一样的玻璃态深色，
+   并让它的 padding / border-radius 与 ai-practice-wrap 里的卡片（grid 三列）一致 */
+.cert-ai-card.scroll-stack-card {
+  /* ---------- 继承上方栏目 ai-card 核心样式（不依赖 index.html 类重复声明）---------- */
+  padding: 2.25rem 2.5rem !important;
+  border-radius: 22px !important;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)) padding-box,
+    rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 14px 38px -20px rgba(0, 0, 0, 0.5) !important;
+  /* ---------- 覆盖 scroll-stack-card 的默认值 ---------- */
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+  width: 100% !important;
+  max-width: 1060px !important;
+  margin: 0 auto !important;
+  overflow: visible !important;
+  color: #fff;
+  font-family: inherit;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.45s ease,
+              border-color 0.3s ease,
+              background 0.3s ease !important;
+  cursor: pointer;
+}
+.cert-ai-card.scroll-stack-card:hover {
+  transform: translateY(-2px) scale(1.002) !important;
+  border-color: rgba(255, 192, 76, 0.52) !important;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)) padding-box,
+    rgba(255, 255, 255, 0.085) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 24px 56px -22px rgba(255, 180, 80, 0.22),
+    0 10px 28px -16px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* 三列布局：num | body | date （与 AI 实战 / 前端动效 / PPT 栏目 ai-card 对齐） */
+.cert-ai-card.scroll-stack-card {
+  display: grid !important;
+  grid-template-columns: 68px 1fr auto;
+  align-items: start;
+  gap: 18px;
+}
+
+.cert-ai-card .ai-card-num {
+  grid-column: 1 / 2;
+  font-family: 'Courier New', ui-monospace, monospace;
+  font-weight: 700;
+  font-size: clamp(2rem, 3.2vw, 2.6rem);
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255, 202, 96, 0.88);
+  letter-spacing: -0.02em;
+  transform: translateY(2px);
+  padding-top: 2px;
+  pointer-events: none;
+}
+
+.cert-ai-card .ai-card-body {
+  grid-column: 2 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cert-ai-card .ai-card-title {
+  font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
+  font-size: clamp(1.02rem, 1.5vw, 1.22rem);
+  font-weight: 600;
+  line-height: 1.5;
+  color: #ffffff;
+  letter-spacing: 0.01em;
+  padding: 0;
+  margin: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cert-ai-card-desc-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px 12px;
+}
+
+.cert-ai-card-tag {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: #181a22;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffd173 0%, #ffb14c 100%);
+  border-radius: 999px;
+  white-space: nowrap;
+  transform: translateY(2px);
+  box-shadow: 0 2px 6px -2px rgba(255, 170, 80, 0.45);
+}
+
+.cert-ai-card-desc.ai-card-desc {
+  flex: 1 1 220px;
+  margin: 0;
+  color: rgba(230, 235, 255, 0.68);
+  font-size: 0.835rem;
+  line-height: 1.65;
+  font-weight: 300;
+  letter-spacing: 0.002em;
+  padding: 0;
+}
+
+.cert-ai-card .ai-card-date {
+  grid-column: 3 / 4;
+  justify-self: end;
+  align-self: start;
+  font-family: 'Courier New', ui-monospace, monospace;
+  font-weight: 500;
+  font-size: 0.78rem;
+  color: rgba(255, 202, 96, 0.82);
+  letter-spacing: 0.12em;
+  line-height: 1.6;
+  text-align: right;
+  transform: translateY(6px);
+  white-space: nowrap;
+}
+
+/* 与 AI 实战栏目一致：hover 时白色渐变扫过 overlay */
+.cert-ai-card .ai-card-overlay {
+  position: absolute !important;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+  z-index: 2;
+}
+/* overlay::before 扫光动画与 ai-card 全局样式保持一致，这里只做兜底 */
+.cert-ai-card .ai-card-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 70%;
+  height: 100%;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 30%,
+    rgba(255, 255, 255, 0.38) 50%,
+    rgba(255, 255, 255, 0.05) 70%,
+    transparent 100%
+  );
+  transform: skewX(-22deg);
+  transition: left 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: left;
+}
+.cert-ai-card.scroll-stack-card:hover .ai-card-overlay::before {
+  left: 130%;
+}
+
+/* hover 时的文字染色：与上方栏目 ai-card 保持一致 */
+.cert-ai-card.scroll-stack-card:hover .ai-card-title {
+  background: linear-gradient(135deg, #fff 0%, #ffe7a8 52%, #ffc14d 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  text-shadow: none;
+}
+.cert-ai-card.scroll-stack-card:hover .ai-card-num {
+  -webkit-text-stroke-color: #ffc14d;
+}
+
+/* 弹出缩略图：尺寸比项目卡片小一圈（证书预览更精致） */
+.cert-ai-card .cert-ai-popup-img.ai-popup-img {
+  width: 210px;
+  height: 150px;
+  border-radius: 16px;
+  background: #f4f6ff;
+  border: 2px solid rgba(255, 202, 96, 0.72);
+  box-shadow:
+    0 18px 40px -12px rgba(255, 160, 80, 0.42),
+    0 8px 22px -10px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(-20deg) scale(0.5);
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.45s ease !important;
+  z-index: 12;
+}
+
+/* ---------- 手机端（<640px）：三列 → 一列堆叠，num+日期在同一行 ---------- */
+@media (max-width: 639.98px) {
+  .cert-ai-card.scroll-stack-card {
+    padding: 1.35rem 1.25rem !important;
+    border-radius: 20px !important;
+    display: flex !important;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .cert-ai-card.scroll-stack-card > .ai-card-num {
+    order: 1;
+    font-size: 1.85rem !important;
+  }
+  .cert-ai-card.scroll-stack-card > .ai-card-body {
+    order: 2;
+    gap: 8px;
+  }
+  .cert-ai-card.scroll-stack-card > .ai-card-date {
+    order: 3;
+    transform: none;
+    justify-self: flex-start;
+    text-align: left;
+    font-size: 0.74rem;
+    letter-spacing: 0.1em;
+  }
+  .cert-ai-card .ai-card-title {
+    font-size: 1.02rem;
+    line-height: 1.5;
+  }
+  .cert-ai-card-desc.ai-card-desc {
+    flex: 1 1 100%;
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+  .cert-ai-card .cert-ai-popup-img.ai-popup-img {
+    display: none;   /* 手机端点击卡片直接放大图，不显示悬浮缩略图，避免挡住内容 */
+  }
+}
+/* 更小手机（<=380px）再紧凑一档 */
+@media (max-width: 380px) {
+  .cert-ai-card.scroll-stack-card { padding: 1.2rem 1rem !important; }
+  .cert-ai-card.scroll-stack-card > .ai-card-num { font-size: 1.7rem !important; }
+  .cert-ai-card .ai-card-title { font-size: 0.98rem; }
+}
+
+/* 平板（640~1024）轻度收窄 */
+@media (min-width: 640px) and (max-width: 1024px) {
+  .cert-ai-card.scroll-stack-card {
+    padding: 2rem 2.15rem !important;
+    grid-template-columns: 60px 1fr auto;
+  }
+  .cert-ai-card.scroll-stack-card > .ai-card-num {
+    font-size: clamp(1.9rem, 3vw, 2.25rem);
+  }
+  .cert-ai-card .cert-ai-popup-img.ai-popup-img {
+    width: 180px;
+    height: 130px;
+  }
+}
+
+/* 进入动画（JS 会在挂载两帧后给卡片加 opacity:1，过渡期间不影响 transform 堆叠） */
+.scroll-stack-card.ss-card-ready {
+  /* 没有额外属性，仅用于样式命中选择器时的兜底 */
+}
