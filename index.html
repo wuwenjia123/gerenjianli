@@ -5062,7 +5062,9 @@
           el.classList.add('is-visible');
           io.unobserve(el);
         });
-      }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+      /* threshold 用 0 而非 0.12：手机端视口矮、模块高，0.12 会让超长模块永远到不了触发比例而永久隐藏（opacity:0）。
+         改成 0 后，元素顶部一进入（经 rootMargin 收缩后的）视口即触发，超长模块也能正常显示；滚动到才出现的节奏不变 */
+      }, { threshold: 0, rootMargin: '0px 0px -8% 0px' });
       reveals.forEach(function (el) {
         el._initTop = el.getBoundingClientRect().top;
         io.observe(el);
