@@ -1,0 +1,12 @@
+# WorkBuddy / editor data
+.workbuddy/
+
+# temp references
+_temp_ref_hscroll/
+
+# OS / shortcut files
+*.lnk
+Thumbs.db
+Desktop.ini
+.DS_Store
+

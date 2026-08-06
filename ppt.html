@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PPT设计者 · 吴文嘉</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; overflow:hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+    color: #ffffff;
+    /* 活力高端：深玫红 → 深紫 → 墨绿蓝渐变 */
+    background:
+      radial-gradient(ellipse at 15% 20%, rgba(220, 40, 120, 0.35) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 80%, rgba(0, 180, 220, 0.30) 0%, transparent 55%),
+      radial-gradient(ellipse at 50% 50%, rgba(120, 60, 200, 0.22) 0%, transparent 70%),
+      linear-gradient(135deg,
+        #3a0a28 0%,
+        #2a0f45 35%,
+        #181845 65%,
+        #082b3d 100%);
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+  }
+
+  /* 七彩墨水 Canvas */
+  #inkCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* 散落的发光小竖条（装饰） */
+  .spark-deco {
+    position: absolute;
+    width: 3px;
+    height: 28px;
+    border-radius: 2px;
+    opacity: 0.75;
+    filter: blur(0.6px);
+    animation: sparkleFloat 5s ease-in-out infinite;
+    z-index: 1;
+  }
+  @keyframes sparkleFloat {
+    0%,100% { transform: translateY(0); opacity: 0.55; }
+    50%     { transform: translateY(-14px); opacity: 1; }
+  }
+
+  /* 返回按钮 */
+  .back-btn {
+    position: fixed;
+    top: 22px;
+    left: 22px;
+    z-index: 30;
+    background: rgba(0,0,0,0.45);
+    color: #ffd6d6;
+    border: 1px solid #d94260;
+    padding: 0.5rem 1rem;
+    font-size: 0.82rem;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    border-radius: 3px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: all 0.25s ease;
+  }
+  .back-btn:hover {
+    background: rgba(217, 66, 96, 0.35);
+    transform: translateX(-2px);
+    box-shadow: 0 6px 20px -6px rgba(217, 66, 96, 0.5);
+  }
+
+  /* 居中舞台 */
+  .stage {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1.2rem;
+  }
+
+  /* 上方英文副标题 */
+  .ppt-sub {
+    font-family: 'Courier New', monospace;
+    font-size: clamp(0.7rem, 1.6vw, 0.95rem);
+    letter-spacing: 5px;
+    color: rgba(210, 210, 235, 0.78);
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0;
+    animation: subFadeIn 1.1s ease 0.2s forwards;
+    margin-bottom: 1.2rem;
+  }
+  @keyframes subFadeIn {
+    0%   { opacity: 0; transform: translateY(-8px); letter-spacing: 1px; }
+    100% { opacity: 1; transform: translateY(0);    letter-spacing: 5px; }
+  }
+
+  /* 主标题：PPT设计者（渐变色，不抖动，逐渐出现） */
+  .ppt-title {
+    position: relative;
+    font-size: clamp(3.2rem, 10vw, 7.5rem);
+    font-weight: 900;
+    letter-spacing: 4px;
+    line-height: 1;
+    white-space: nowrap;
+    /* 活力橙红渐变 */
+    background: linear-gradient(110deg,
+      #fff6cc 0%,
+      #ffd38a 18%,
+      #ff9a6c 42%,
+      #ff5e69 70%,
+      #e93b5f 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter:
+      drop-shadow(0 2px 0 rgba(120, 20, 50, 0.55))
+      drop-shadow(0 8px 24px rgba(255, 100, 90, 0.5))
+      drop-shadow(0 0 36px rgba(255, 180, 110, 0.4));
+    /* 不抖动：用 transform 而非 top/left 变化；只做 fade + 轻微放大（smooth） */
+    opacity: 0;
+    transform: scale(0.965);
+    will-change: transform, opacity;
+    animation: titleFadeIn 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.6s forwards;
+  }
+  @keyframes titleFadeIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.965);
+      filter:
+        drop-shadow(0 2px 0 rgba(120, 20, 50, 0.55))
+        drop-shadow(0 8px 24px rgba(255, 100, 90, 0.08));
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+      filter:
+        drop-shadow(0 2px 0 rgba(120, 20, 50, 0.55))
+        drop-shadow(0 8px 24px rgba(255, 100, 90, 0.5))
+        drop-shadow(0 0 36px rgba(255, 180, 110, 0.4));
+    }
+  }
+
+  /* 文字额外光晕层（增强高端感） */
+  .ppt-title::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    background: none;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    text-shadow:
+      0 0 18px rgba(255, 180, 120, 0.75),
+      0 0 42px rgba(255, 90, 120, 0.55),
+      0 0 80px rgba(220, 60, 100, 0.3);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* 下方两个色块 */
+  .ppt-blocks {
+    margin-top: 3.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.4rem;
+    justify-content: center;
+    align-items: stretch;
+    max-width: 900px;
+    width: 100%;
+  }
+  .ppt-block {
+    flex: 1 1 320px;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.1rem 1.6rem;
+    font-size: clamp(0.9rem, 1.8vw, 1.05rem);
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(0, 0, 0, 0.48);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow:
+      0 10px 30px -10px rgba(0,0,0,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+    /* 依次延迟渐入 */
+    opacity: 0;
+    transform: translateY(10px);
+    animation: blockFadeIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .ppt-block:nth-child(1) { animation-delay: 1.8s; }
+  .ppt-block:nth-child(2) { animation-delay: 2.1s; }
+
+  .ppt-block:nth-child(1) {
+    border-color: rgba(255, 120, 160, 0.35);
+    box-shadow:
+      0 10px 30px -10px rgba(0,0,0,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      0 0 0 1px rgba(255, 80, 140, 0.08),
+      0 0 28px -8px rgba(255, 80, 140, 0.4);
+  }
+  .ppt-block:nth-child(2) {
+    border-color: rgba(120, 200, 255, 0.32);
+    box-shadow:
+      0 10px 30px -10px rgba(0,0,0,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      0 0 0 1px rgba(80, 180, 255, 0.08),
+      0 0 28px -8px rgba(80, 180, 255, 0.4);
+  }
+  @keyframes blockFadeIn {
+    0%   { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 响应式 */
+  @media (max-width: 640px) {
+    .ppt-sub { margin-bottom: 1rem; }
+    .ppt-title { letter-spacing: 2px; }
+    .ppt-blocks { margin-top: 2.2rem; gap: 1rem; padding: 0 0.5rem; }
+    .ppt-block { flex: 1 1 100%; padding: 1rem 1.2rem; min-height: 58px; }
+  }
+</style>
+</head>
+<body>
+  <!-- 散落发光装饰 -->
+  <div class="spark-deco" style="left:22%; top:14%; background:linear-gradient(180deg,#ff719a,#ff2d5e); animation-delay:0.4s;"></div>
+  <div class="spark-deco" style="left:73%; top:8%;  background:linear-gradient(180deg,#7cc8ff,#3c6dff); animation-delay:1.1s;"></div>
+  <div class="spark-deco" style="left:88%; top:32%; background:linear-gradient(180deg,#9de0ff,#4db4e9); animation-delay:2.3s;"></div>
+  <div class="spark-deco" style="left:18%; top:57%; background:linear-gradient(180deg,#ff8fb1,#e73e85); animation-delay:1.7s;"></div>
+  <div class="spark-deco" style="left:54%; top:80%; background:linear-gradient(180deg,#fef0a2,#f5c94b); animation-delay:0.8s;"></div>
+  <div class="spark-deco" style="left:78%; top:38%; background:linear-gradient(180deg,#c1a6ff,#7d5cff); animation-delay:3.1s;"></div>
+  <div class="spark-deco" style="left:68%; top:6%;  background:linear-gradient(180deg,#ffe2a0,#f0a24e); animation-delay:0.1s;"></div>
+
+  <canvas id="inkCanvas"></canvas>
+
+  <button class="back-btn" onclick="location.href='index.html'">&lt; 返回简历</button>
+
+  <div class="stage">
+    <div class="ppt-sub">VISUAL DESIGN &amp; PRESENTATION</div>
+    <h1 class="ppt-title" id="pptTitle" data-text="PPT设计者">PPT设计者</h1>
+    <div class="ppt-blocks">
+      <div class="ppt-block">致力于PPT设计</div>
+      <div class="ppt-block">侧重于竞赛PPT设计，正在学习更多行业的PPT</div>
+    </div>
+  </div>
+
+<script>
+/* =========================================================
+   七彩墨水持续滴落 Canvas 粒子特效
+   - 从"PPT设计者"文字底部随机位置持续滴出
+   - 彩色颗粒下落 + 落地溅起小水花
+   - 完全不影响文字（Canvas pointer-events:none）
+   ========================================================= */
+(function initInkDrops() {
+  const canvas = document.getElementById('inkCanvas');
+  const ctx = canvas.getContext('2d');
+  const titleEl = document.getElementById('pptTitle');
+  let W = 0, H = 0, dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+  // 颜色池（七彩墨水）
+  const INK_COLORS = [
+    '#ff5e7e', // 粉红
+    '#ff8b45', // 橙
+    '#ffd447', // 黄
+    '#50d69a', // 青绿
+    '#4cc9ff', // 青蓝
+    '#7b8cff', // 蓝紫
+    '#c77dff', // 紫
+    '#ff6fb5', // 玫红
+    '#60e2c7', // 薄荷
+  ];
+
+  function resize() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // 获取文字底部位置（相对 viewport）
+  function getTitleBottomLine() {
+    const r = titleEl.getBoundingClientRect();
+    return {
+      leftX:  r.left + r.width * 0.08,
+      rightX: r.left + r.width * 0.92,
+      bottomY: r.bottom - r.height * 0.04, // 从笔画底部稍微靠上一点的位置渗出
+    };
+  }
+
+  // 粒子池
+  const drops = [];     // 正在下落的墨滴
+  const splashes = [];  // 落地溅起的小颗粒
+
+  class InkDrop {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+      this.vy = 0.6 + Math.random() * 1.4; // 初速度
+      this.g = 0.08 + Math.random() * 0.06; // 重力加速度
+      this.r = 2 + Math.random() * 3.2;     // 半径
+      this.color = INK_COLORS[(Math.random() * INK_COLORS.length) | 0];
+      this.alpha = 0.9;
+      this.trail = []; // 拖尾
+      this.alive = true;
+    }
+    step() {
+      // 记录拖尾
+      this.trail.push({ x: this.x, y: this.y, r: this.r * 0.7, a: this.alpha });
+      if (this.trail.length > 8) this.trail.shift();
+      // 物理
+      this.vy += this.g;
+      this.y += this.vy;
+      // 触底（留点余地给溅起）
+      if (this.y >= H - 10) {
+        this.y = H - 10;
+        this.splash();
+        this.alive = false;
+      }
+    }
+    splash() {
+      // 溅起 4-8 个小颗粒
+      const n = 4 + ((Math.random() * 5) | 0);
+      for (let i = 0; i < n; i++) {
+        splashes.push(new InkSplash(this.x, this.y, this.color));
+      }
+    }
+    draw(ctx) {
+      // 拖尾
+      for (let i = 0; i < this.trail.length; i++) {
+        const t = this.trail[i];
+        const k = i / this.trail.length;
+        ctx.globalAlpha = t.a * k * 0.55;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, Math.max(0.5, t.r * k * 0.7), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // 主体（拉长一点的水滴形）
+      ctx.globalAlpha = this.alpha;
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      const stretch = Math.min(1.6, 0.8 + this.vy * 0.2);
+      ctx.ellipse(this.x, this.y, this.r, this.r * stretch, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // 高光
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(this.x - this.r * 0.3, this.y - this.r * 0.35, this.r * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  class InkSplash {
+    constructor(x, y, color) {
+      this.x = x;
+      this.y = y;
+      // 向外向上散开
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.85;
+      const speed = 1.2 + Math.random() * 3.4;
+      this.vx = Math.cos(angle) * speed;
+      this.vy = Math.sin(angle) * speed;
+      this.g = 0.14;
+      this.r = 0.9 + Math.random() * 1.7;
+      this.color = color;
+      this.alpha = 0.9;
+      this.life = 32 + ((Math.random() * 24) | 0);
+      this.age = 0;
+      this.alive = true;
+    }
+    step() {
+      this.vy += this.g;
+      this.x += this.vx;
+      this.y += this.vy;
+      this.age++;
+      this.alpha = Math.max(0, 1 - this.age / this.life);
+      if (this.age >= this.life || this.y >= H) this.alive = false;
+    }
+    draw(ctx) {
+      ctx.globalAlpha = this.alpha;
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // 持续滴出：每帧以概率生成墨滴（从文字底部）
+  let spawnTimer = 0;
+  function spawn() {
+    const line = getTitleBottomLine();
+    const spanX = line.rightX - line.leftX;
+    if (spanX > 20) {
+      // 每帧 30% 概率出 1-2 滴，密度根据窗口自适
+      spawnTimer++;
+      const baseRate = window.innerWidth < 640 ? 0.22 : 0.4;
+      if (Math.random() < baseRate) {
+        const dropsCount = 1 + (Math.random() < 0.25 ? 1 : 0);
+        for (let i = 0; i < dropsCount; i++) {
+          const x = line.leftX + Math.random() * spanX;
+          const y = line.bottomY + Math.random() * 4;
+          drops.push(new InkDrop(x, y));
+        }
+      }
+    }
+  }
+
+  // 主循环
+  function loop() {
+    // 半透明清屏 → 形成柔和拖影（高端感）
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+
+    spawn();
+
+    // 墨滴
+    for (let i = drops.length - 1; i >= 0; i--) {
+      const d = drops[i];
+      d.step();
+      d.draw(ctx);
+      if (!d.alive) drops.splice(i, 1);
+    }
+    // 溅起颗粒
+    for (let i = splashes.length - 1; i >= 0; i--) {
+      const s = splashes[i];
+      s.step();
+      s.draw(ctx);
+      if (!s.alive) splashes.splice(i, 1);
+    }
+
+    requestAnimationFrame(loop);
+  }
+  // 等文字动画开始后再启动滴落（1.2s 后），避免布局未稳定
+  setTimeout(loop, 1200);
+})();
+</script>
+</body>
+</html>
