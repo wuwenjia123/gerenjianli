@@ -5042,33 +5042,64 @@
     frame();
   })();
 </script>
-<!-- 模块入场动画触发器：IntersectionObserver 为 .reveal 添加 is-visible；首屏外的元素清零延时，滚动到时立即出现而非等待 -->
+<!-- 模块入场动画触发器：IntersectionObserver 优先（平滑滚动触发）；scroll/rAF 兜底 + load 复检 + 超时兜底，确保任意移动环境都能触发，避免 .reveal 永久停留在 opacity:0（内容空白/无动画） -->
 <script>
   (function () {
     function initReveal() {
-      var reveals = document.querySelectorAll('.reveal');
+      var reveals = [].slice.call(document.querySelectorAll('.reveal'));
+      if (!reveals.length) return;
       var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduce || !('IntersectionObserver' in window)) {
-        reveals.forEach(function (el) { el.classList.add('is-visible'); });
-        return;
-      }
       var vh = window.innerHeight || document.documentElement.clientHeight;
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          if (!e.isIntersecting) return;
-          var el = e.target;
-          // 仅在首屏内的元素保留阶梯延时；滚动进入视野的元素立即出现，避免无谓等待
-          if (el._initTop > vh) { el.style.animationDelay = '0s'; }
-          el.classList.add('is-visible');
-          io.unobserve(el);
+      // 记录每个元素初始相对视口顶部的位置：用于区分「首屏元素（保留阶梯延时）」与「滚动进入元素（立即出现）」
+      reveals.forEach(function (el) { el._initTop = el.getBoundingClientRect().top; });
+
+      function revealNow(el) {
+        if (el.classList.contains('is-visible')) return;
+        // 仅在首屏内的元素保留阶梯延时；滚动进入视野的元素立即出现，避免无谓等待
+        if (el._initTop > vh) { el.style.animationDelay = '0s'; }
+        el.classList.add('is-visible');
+      }
+
+      // 系统开启「减弱动态效果」时，直接显示（无障碍规范，不播放动画）
+      if (reduce) { reveals.forEach(revealNow); return; }
+
+      // 1) IntersectionObserver 优先：平滑的滚动入场节奏
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) { revealNow(e.target); io.unobserve(e.target); }
+          });
+        }, { threshold: 0, rootMargin: '0px 0px -8% 0px' });
+        reveals.forEach(function (el) { io.observe(el); });
+      }
+
+      // 2) 兜底：scroll/resize + rAF 节流检测，防部分移动 WebView 的 IntersectionObserver 不触发
+      var ticking = false;
+      function check() {
+        var curVh = window.innerHeight || document.documentElement.clientHeight;
+        reveals = reveals.filter(function (el) {
+          if (el.classList.contains('is-visible')) return false;
+          var top = el.getBoundingClientRect().top;
+          if (top < curVh * 0.92) { revealNow(el); return false; }
+          return true;
         });
-      /* threshold 用 0 而非 0.12：手机端视口矮、模块高，0.12 会让超长模块永远到不了触发比例而永久隐藏（opacity:0）。
-         改成 0 后，元素顶部一进入（经 rootMargin 收缩后的）视口即触发，超长模块也能正常显示；滚动到才出现的节奏不变 */
-      }, { threshold: 0, rootMargin: '0px 0px -8% 0px' });
-      reveals.forEach(function (el) {
-        el._initTop = el.getBoundingClientRect().top;
-        io.observe(el);
-      });
+        if (!reveals.length) {
+          window.removeEventListener('scroll', onScroll);
+          window.removeEventListener('resize', onScroll);
+        }
+      }
+      function onScroll() {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function () { check(); ticking = false; });
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+
+      // 3) 立即检测一次（处理已在视口内的首屏元素）+ 资源加载后复检（布局稳定）+ 超时兜底（极端环境不触发时强制显示接近视口的元素）
+      check();
+      window.addEventListener('load', function () { setTimeout(check, 60); });
+      setTimeout(check, 1500);
     }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initReveal);
