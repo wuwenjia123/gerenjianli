@@ -1108,6 +1108,23 @@
     }
     .ai-card:hover .ai-card-desc { color: #1F2E26; }
 
+    .ai-card-detail-link {
+      display: inline-block;
+      margin-top: 0.7rem;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      color: var(--accent-primary);
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: opacity var(--dur-base) var(--ease-out-expo), transform var(--dur-base) var(--ease-out-expo);
+    }
+    .ai-card:hover .ai-card-detail-link,
+    .ai-card:focus-visible .ai-card-detail-link {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
     .ai-card-date {
       font-family: var(--font-mono);
       font-size: 0.88rem;
@@ -4537,6 +4554,7 @@
         <div class="ai-card-body">
           <div class="ai-card-title">${proj.title}</div>
           <div class="ai-card-desc">${proj.desc}</div>
+          <span class="ai-card-detail-link">查看详情 →</span>
         </div>
         <div class="ai-card-date">${proj.date}</div>
       `;
@@ -4564,6 +4582,16 @@
         if (touch) updatePopupPos(touch);
         else updatePopupPos({});
       }, { passive: true });
+
+      // 点击栏目进入详情页
+      const goDetail = () => { window.location.href = 'ai-detail.html?id=' + proj.num; };
+      card.addEventListener('click', goDetail);
+      card.setAttribute('role', 'link');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', proj.title + ' 查看详情');
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goDetail(); }
+      });
     });
 
     // ============ 前端动效作品卡片：粒子特效/飞机大战 · 鼠标跟随画框 + 点击跳转 ============

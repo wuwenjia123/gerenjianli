@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>AI 编程实战 · 详情</title>
+<style>
+  :root{
+    --bg-root:#F6FBF7;
+    --bg-card:#FFFFFF;
+    --text-primary:#1F2E26;
+    --text-secondary:#4A5D53;
+    --text-tertiary:#7A8E84;
+    --accent-primary:#2F6B4F;
+    --accent-primary-2:#5E9B74;
+    --grad-accent:linear-gradient(135deg,#5E9B74 0%,#2F6B4F 55%,#245A40 100%);
+    --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+    --font-mono:'Roboto Mono','Courier New',Courier,monospace;
+    --ease-out-expo:cubic-bezier(.22,1,.36,1);
+    --dur-base:.32s;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg-root);color:var(--text-primary);scroll-behavior:smooth;}
+  body{
+    font-family:var(--font-sans);
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding:0 1rem 4rem;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;z-index:-2;
+    background:
+      radial-gradient(90% 70% at 0% 0%,rgba(94,155,116,0.10),rgba(0,0,0,0) 60%),
+      radial-gradient(90% 70% at 100% 0%,rgba(94,155,116,0.08),rgba(0,0,0,0) 60%),
+      radial-gradient(110% 80% at 50% 110%,rgba(47,107,79,0.05),rgba(0,0,0,0) 65%);
+    pointer-events:none;
+  }
+  .wrap{width:100%;max-width:960px;margin-top:1.5rem;}
+
+  /* 返回 */
+  .back-link{
+    display:inline-flex;align-items:center;gap:.5rem;
+    font-family:var(--font-mono);font-size:.85rem;
+    color:var(--accent-primary);text-decoration:none;
+    padding:.55rem 1.1rem;border:1px solid rgba(47,107,79,0.25);
+    border-radius:999px;background:#fff;
+    transition:all var(--dur-base) var(--ease-out-expo);
+    margin-bottom:1.8rem;cursor:pointer;
+  }
+  .back-link:hover{background:var(--grad-accent);color:#fff;border-color:transparent;transform:translateX(-3px);}
+
+  /* 头部 */
+  .detail-head{margin-bottom:2rem;}
+  .detail-num{
+    font-family:var(--font-mono);font-size:.8rem;letter-spacing:3px;
+    color:var(--accent-primary);margin-bottom:.8rem;
+    display:inline-flex;align-items:center;gap:.6rem;
+  }
+  .detail-num::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--grad-accent);box-shadow:0 0 0 3px rgba(47,107,79,0.10);}
+  .detail-title{
+    font-size:clamp(1.8rem,5vw,3rem);font-weight:900;line-height:1.12;
+    color:var(--text-primary);letter-spacing:-.5px;margin-bottom:.8rem;
+  }
+  .detail-date{
+    font-family:var(--font-mono);font-size:.85rem;color:var(--text-tertiary);
+    display:inline-block;padding:.3rem .9rem;border:1px solid rgba(50,80,60,0.12);
+    border-radius:999px;background:#fff;
+  }
+
+  /* 截图大图 */
+  .detail-shot{
+    width:100%;border-radius:20px;overflow:hidden;
+    border:1px solid rgba(50,80,60,0.10);
+    background:#fff;box-shadow:0 18px 46px -24px rgba(31,46,38,0.18);
+    margin-bottom:2rem;position:relative;
+  }
+  .detail-shot img{width:100%;height:auto;display:block;}
+  .detail-shot .shot-tip{
+    position:absolute;left:1rem;bottom:1rem;
+    font-family:var(--font-mono);font-size:.72rem;letter-spacing:1px;
+    color:#fff;background:rgba(31,46,38,0.55);
+    padding:.25rem .7rem;border-radius:999px;backdrop-filter:blur(4px);
+  }
+  .shot-empty{
+    width:100%;aspect-ratio:16/10;border-radius:20px;
+    border:1px dashed rgba(94,155,116,0.4);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-tertiary);font-family:var(--font-mono);font-size:.9rem;
+    background:linear-gradient(180deg,#fff,#FAFAFA);margin-bottom:2rem;
+  }
+
+  /* 描述与要点 */
+  .detail-section{
+    background:var(--bg-card);border:1px solid rgba(50,80,60,0.10);
+    border-radius:20px;padding:1.8rem 2rem;margin-bottom:1.4rem;
+    box-shadow:0 10px 30px -20px rgba(31,46,38,0.14);
+  }
+  .detail-section h3{
+    font-size:1.1rem;font-weight:800;color:var(--text-primary);
+    margin-bottom:1rem;display:flex;align-items:center;gap:.6rem;
+  }
+  .detail-section h3::before{content:'';width:4px;height:1.1rem;border-radius:2px;background:var(--grad-accent);}
+  .detail-lead{color:var(--text-secondary);font-size:1.02rem;margin-bottom:1.1rem;}
+  .detail-list{list-style:none;display:flex;flex-direction:column;gap:.7rem;}
+  .detail-list li{
+    position:relative;padding-left:1.4rem;color:var(--text-secondary);font-size:.97rem;
+  }
+  .detail-list li::before{
+    content:'';position:absolute;left:0;top:.62em;width:7px;height:7px;border-radius:50%;
+    background:var(--grad-accent);
+  }
+  .detail-list b{color:var(--text-primary);font-weight:700;}
+
+  /* 标签行 */
+  .tag-row{display:flex;flex-wrap:wrap;gap:.6rem;}
+  .tag{
+    font-family:var(--font-mono);font-size:.78rem;
+    padding:.35rem .9rem;border-radius:999px;
+    background:rgba(94,155,116,0.12);color:var(--accent-primary);
+    border:1px solid rgba(94,155,116,0.25);
+  }
+
+  /* 底部导航 */
+  .detail-nav{display:flex;justify-content:space-between;gap:1rem;margin-top:1rem;}
+  .detail-nav a{
+    flex:1;text-align:center;text-decoration:none;
+    font-family:var(--font-mono);font-size:.85rem;
+    color:var(--text-secondary);padding:.8rem;border-radius:14px;
+    border:1px solid rgba(50,80,60,0.12);background:#fff;
+    transition:all var(--dur-base) var(--ease-out-expo);
+  }
+  .detail-nav a:hover{color:#fff;background:var(--grad-accent);border-color:transparent;}
+  .detail-nav a.disabled{opacity:.4;pointer-events:none;}
+
+  @media (max-width:640px){
+    .detail-section{padding:1.4rem 1.2rem;}
+    .detail-nav{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back-link" href="index.html#aiPractice">← 返回作品集</a>
+    <div class="detail-head">
+      <div class="detail-num" id="dNum">01</div>
+      <div class="detail-title" id="dTitle">—</div>
+      <div class="detail-date" id="dDate">—</div>
+    </div>
+
+    <div id="dShot"></div>
+
+    <div class="detail-section">
+      <h3>项目概述</h3>
+      <p class="detail-lead" id="dLead">—</p>
+      <ul class="detail-list" id="dList"></ul>
+    </div>
+
+    <div class="detail-section">
+      <h3>技术栈 / 标签</h3>
+      <div class="tag-row" id="dTags"></div>
+    </div>
+
+    <div class="detail-nav" id="dNav"></div>
+  </div>
+
+<script>
+  const DATA = {
+    '01':{
+      num:'01',
+      title:'DYNAMIC VISUAL WEBSITE',
+      zh:'动态视觉网站',
+      date:'2026.3',
+      image:'AI1.png',
+      imageWebp:'AI1.webp',
+      lead:'使用 Trae AI 原生 IDE，在零前端基础的情况下，通过自然语言对话驱动，独立完成动态视觉网站的搭建与部署。从页面结构、动效实现到响应式适配，全程由 AI 协作完成。',
+      list:[
+        '<b>工具</b>：Trae（AI 原生 IDE），对话式编程',
+        '<b>产出</b>：动态视觉个人作品集网站（本页即成果之一）',
+        '<b>亮点</b>：零代码基础，从需求到上线全流程 AI 辅助',
+        '<b>能力</b>：HTML / CSS / JS 动效、移动端响应式适配'
+      ],
+      tags:['Trae','AI IDE','动态视觉','响应式','动效']
+    },
+    '02':{
+      num:'02',
+      title:'AUTOMATED WORKFLOW',
+      zh:'自动工作流',
+      date:'2026.6',
+      image:'AI2.png',
+      imageWebp:'AI2.webp',
+      lead:'搭建自动化信息流工作流：每日定时抓取指定来源资讯，经 AI 摘要归纳后生成结构化日报，并自动推送至指定渠道，把"每天看资讯"变成"每天收日报"。',
+      list:[
+        '<b>触发</b>：每日定时（cron）自动运行',
+        '<b>流程</b>：抓取 → AI 摘要 → 结构化排版 → 自动推送',
+        '<b>工具</b>：WorkBuddy / 智能体编排',
+        '<b>产出</b>：每日自动化资讯日报，省去手动检索'
+      ],
+      tags:['自动化','智能体','定时任务','AI 摘要','信息流']
+    },
+    '03':{
+      num:'03',
+      title:'PERSONAL AI EMPLOYEE',
+      zh:'私人 AI 雇员',
+      date:'2025.12',
+      image:null,
+      imageWebp:null,
+      lead:'通过系统提示词工程与方法论沉淀，构建固定提示词模板，将通用大模型调教为可长期协作的"私人 AI 雇员"，覆盖日常助理、信息整理、内容生成等高频场景。',
+      list:[
+        '<b>方法</b>：系统提示词 + 固定提示词模板',
+        '<b>场景</b>：助理 / 信息整理 / 内容生成',
+        '<b>特点</b>：可复用、可迭代、行为稳定',
+        '<b>成果</b>：沉淀出可靠的个人 AI 工作流'
+      ],
+      tags:['提示词工程','智能体','工作流','方法论']
+    }
+  };
+
+  const order = ['01','02','03'];
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id') || '01';
+  const d = DATA[id] || DATA['01'];
+
+  document.getElementById('dNum').textContent = d.num;
+  document.getElementById('dTitle').textContent = d.title + ' · ' + d.zh;
+  document.getElementById('dDate').textContent = d.date;
+  document.getElementById('dLead').textContent = d.lead;
+
+  const shot = document.getElementById('dShot');
+  if (d.imageWebp) {
+    shot.className = 'detail-shot';
+    shot.innerHTML =
+      '<picture>' +
+        '<source srcset="' + encodeURIComponent(d.imageWebp) + '" type="image/webp">' +
+        '<img src="' + encodeURIComponent(d.image) + '" alt="' + d.title + '" loading="lazy" decoding="async">' +
+      '</picture>' +
+      '<span class="shot-tip">项目截图</span>';
+  } else {
+    shot.className = 'shot-empty';
+    shot.textContent = '截图待补充';
+  }
+
+  const list = document.getElementById('dList');
+  d.list.forEach(function(t){ const li=document.createElement('li'); li.innerHTML=t; list.appendChild(li); });
+
+  const tags = document.getElementById('dTags');
+  d.tags.forEach(function(t){ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s); });
+
+  // 上/下项目导航
+  const idx = order.indexOf(id);
+  const prev = idx>0 ? order[idx-1] : null;
+  const next = idx<order.length-1 ? order[idx+1] : null;
+  const nav = document.getElementById('dNav');
+  nav.innerHTML =
+    (prev ? '<a href="ai-detail.html?id='+prev+'">← 上一个</a>' : '<a class="disabled">← 上一个</a>') +
+    (next ? '<a href="ai-detail.html?id='+next+'">下一个 →</a>' : '<a class="disabled">下一个 →</a>');
+
+  document.title = 'AI 编程实战 · ' + d.zh;
+</script>
+</body>
+</html>
