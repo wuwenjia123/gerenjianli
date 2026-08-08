@@ -4490,14 +4490,18 @@
         title: 'DYNAMIC VISUAL WEBSITE',
         desc: 'Trae+零前端代码基础 = 动态视觉网站',
         date: '2026.3',
-        featured: false
+        featured: false,
+        image: 'AI1.png',
+        imageWebp: 'AI1.webp'
       },
       {
         num: '02',
         title: 'AUTOMATED WORKFLOW',
         desc: '自动工作流——每日自动化抓取信息，生成日报并推送',
         date: '2026.6',
-        featured: true
+        featured: true,
+        image: 'AI2.png',
+        imageWebp: 'AI2.webp'
       },
       {
         num: '03',
@@ -4520,7 +4524,13 @@
       // 效果2：旋转弹出的图片画框（每张卡片对应一个占位 AI1 / AI2 / AI3.png）
       const popup = document.createElement('div');
       popup.className = 'ai-popup-img';
-      popup.innerHTML = '<span class="ai-popup-img-label">AI' + (idx + 1) + '.png</span>';
+      if (proj.imageWebp) {
+        popup.className += ' has-image';
+        popup.style.background = "#fafafa url('" + encodeURIComponent(proj.imageWebp) + "') center/cover no-repeat";
+        popup.innerHTML = '<span class="ai-popup-img-label">AI' + (idx + 1) + '</span>';
+      } else {
+        popup.innerHTML = '<span class="ai-popup-img-label">AI' + (idx + 1) + '.png</span>';
+      }
 
       card.innerHTML = `
         <div class="ai-card-num">${proj.num}</div>
