@@ -4668,9 +4668,16 @@
             const relY = clientY - rect.top;
             popup.style.left = relX + 'px';
             popup.style.top = relY + 'px';
+            popup.style.opacity = '1';
+            popup.style.transform = 'translate(-50%, -50%) rotate(0deg) scale(1)';
+          };
+          const hidePopup = () => {
+            popup.style.opacity = '0';
+            popup.style.transform = 'translate(-50%, -50%) rotate(-20deg) scale(0.5)';
           };
           card.addEventListener('mousemove', updatePopupPos);
           card.addEventListener('mouseenter', updatePopupPos);
+          card.addEventListener('mouseleave', hidePopup);
           card.addEventListener('touchstart', (e) => {
             const touch = e.touches[0];
             if (touch) updatePopupPos(touch);
