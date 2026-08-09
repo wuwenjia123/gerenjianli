@@ -2438,6 +2438,48 @@
       box-shadow: 0 0 20px rgba(47,107,79,0.35);
     }
 
+    /* ============ 前端动效 · 内嵌交互预览灯箱 ============ */
+    .fx-lightbox { flex-direction: column; padding: 0; }
+    .fx-lightbox-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 26px 12px;
+      box-sizing: border-box;
+      color: #cfd8d0;
+      font-family: var(--font-mono);
+    }
+    .fx-lightbox-title { font-size: 0.95rem; letter-spacing: 0.05em; color: #e6ece6; }
+    .fx-lightbox-open {
+      color: var(--accent-primary-2);
+      text-decoration: none;
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      transition: color var(--dur-base) var(--ease-out-expo);
+    }
+    .fx-lightbox-open:hover { color: var(--accent-primary); }
+    .fx-lightbox-iframe {
+      width: 92%;
+      height: 82vh;
+      border: 0;
+      border-radius: var(--r-xl);
+      background: #06080f;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.65), 0 0 0 1px rgba(94,155,116,0.25);
+    }
+    .fx-lightbox-fallback {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      max-width: 460px;
+      text-align: center;
+      color: #cfd8d0;
+      font-family: var(--font-sans);
+      line-height: 1.7;
+    }
+    .fx-lightbox-fallback a { color: var(--accent-primary-2); }
+
     /* ============ 响应式 ============ */
     @media (max-width: 640px) {
       .container {
@@ -3534,7 +3576,7 @@
         <!-- 粒子效果卡片 -->
         <div class="ai-card fx-card" data-popup-label="粒子特效 · Particle FX" data-href="https://lizixiaoguo.netlify.app" target="_blank">
           <div class="ai-card-overlay"></div>
-          <div class="ai-popup-img has-image" style="background:#0a0a0a url('FX1.webp') center/cover no-repeat;">
+          <div class="ai-popup-img has-image" style="background:#fafafa url('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E7%82%AB%E9%85%B7%E7%9A%84Canvas%E7%B2%92%E5%AD%90%E7%89%B9%E6%95%88%E7%95%8C%E9%9D%A2%E6%88%AA%E5%9B%BE%EF%BC%8C%E6%B7%B1%E8%89%B2%E8%83%8C%E6%99%AF%EF%BC%8C%E5%8C%85%E5%90%AB%E5%A4%9A%E5%BD%A9%E7%83%9F%E8%8A%B1%E7%88%86%E7%82%B8%E7%B2%92%E5%AD%90%E3%80%81%E6%B5%81%E5%8A%A8%E6%98%9F%E7%82%B9%E3%80%81%E7%B2%92%E5%AD%90%E6%B1%87%E8%81%9A%E6%95%88%E6%9E%9C%E3%80%81%E5%8F%91%E5%85%89%E9%9C%93%E8%99%B9%E7%BA%BF%E6%9D%A1%EF%BC%8C%E6%9C%AA%E6%9D%A5%E7%A7%91%E6%8A%80%E6%84%9FUI%EF%BC%8C%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%E9%A3%8E%E6%A0%BC%EF%BC%8C%E9%AB%98%E7%BB%86%E8%8A%82&image_size=landscape_4_3') center/cover no-repeat;">
             <span class="ai-popup-img-label">FX1 · 粒子特效</span>
           </div>
           <div class="ai-card-num">01</div>
@@ -3663,6 +3705,19 @@
 <div id="imageModal" class="modal">
   <span class="modal-close">&times;</span>
   <img id="modalImage" src="" alt="证书预览">
+</div>
+
+<!-- 前端动效作品：内嵌式交互预览灯箱（点击卡片 -> 当前页直接加载真实交互 demo） -->
+<div id="fxLightbox" class="modal fx-lightbox">
+  <span class="modal-close" id="fxLightboxClose" title="关闭">&times;</span>
+  <div class="fx-lightbox-bar">
+    <span class="fx-lightbox-title" id="fxLightboxTitle"></span>
+    <a class="fx-lightbox-open" id="fxLightboxOpen" target="_blank" rel="noopener noreferrer">在新标签页打开 ↗</a>
+  </div>
+  <iframe class="fx-lightbox-iframe" id="fxLightboxFrame" allow="fullscreen; autoplay; microphone; camera" referrerpolicy="no-referrer"></iframe>
+  <div class="fx-lightbox-fallback" id="fxLightboxFallback" style="display:none;">
+    <p>该交互演示不支持在页面内嵌显示，请点击右上角「在新标签页打开 ↗」查看。</p>
+  </div>
 </div>
 
 <!-- GSAP 动效库（用于 StrokeText 描边文字动画）：从 <head> 移至此处，避免阻塞首屏渲染，且保证在 ScrollStack 与内联脚本之前执行 -->
@@ -4601,6 +4656,39 @@
     // ============ 前端动效作品卡片：粒子特效/飞机大战 · 鼠标跟随画框 + 点击跳转 ============
     (function initFXCards() {
       const cards = document.querySelectorAll('.fx-card');
+
+      // 内嵌交互预览灯箱：点击卡片 -> 当前页直接加载真实交互 demo（含绿色控制骨架）
+      const lightbox = document.getElementById('fxLightbox');
+      const lbFrame = document.getElementById('fxLightboxFrame');
+      const lbTitle = document.getElementById('fxLightboxTitle');
+      const lbOpen = document.getElementById('fxLightboxOpen');
+      const lbClose = document.getElementById('fxLightboxClose');
+      const lbFallback = document.getElementById('fxLightboxFallback');
+
+      function openLightbox(href, title) {
+        lbTitle.textContent = title || '交互预览';
+        lbOpen.href = href;
+        lbFrame.style.display = 'block';
+        lbFallback.style.display = 'none';
+        lbFrame.src = href;
+        lightbox.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+      function closeLightbox() {
+        lightbox.style.display = 'none';
+        lbFrame.src = 'about:blank';
+        document.body.style.overflow = '';
+      }
+      lbClose.addEventListener('click', closeLightbox);
+      lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lightbox.style.display === 'flex') closeLightbox();
+      });
+      lbFrame.addEventListener('error', () => {
+        lbFrame.style.display = 'none';
+        lbFallback.style.display = 'block';
+      });
+
       cards.forEach(card => {
         const popup = card.querySelector('.ai-popup-img');
         if (popup) {
@@ -4621,13 +4709,18 @@
             else updatePopupPos({});
           }, { passive: true });
         }
-        // 点击卡片 -> 在新标签页打开对应网站
+        // 点击卡片 -> 打开内嵌交互预览灯箱（直接在当前页交互，无需切到外部标签页）
         const href = card.getAttribute('data-href');
-        const target = card.getAttribute('target') || '_blank';
+        const title = (card.querySelector('.ai-card-title') || {}).textContent || '';
         if (href) {
           card.style.cursor = 'pointer';
-          card.addEventListener('click', () => {
-            window.open(href, target);
+          card.setAttribute('role', 'button');
+          card.setAttribute('tabindex', '0');
+          card.setAttribute('aria-label', title + ' · 开启交互预览');
+          const go = () => openLightbox(href, title);
+          card.addEventListener('click', go);
+          card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
           });
         }
       });
