@@ -4657,38 +4657,6 @@
     (function initFXCards() {
       const cards = document.querySelectorAll('.fx-card');
 
-      // 内嵌交互预览灯箱：点击卡片 -> 当前页直接加载真实交互 demo（含绿色控制骨架）
-      const lightbox = document.getElementById('fxLightbox');
-      const lbFrame = document.getElementById('fxLightboxFrame');
-      const lbTitle = document.getElementById('fxLightboxTitle');
-      const lbOpen = document.getElementById('fxLightboxOpen');
-      const lbClose = document.getElementById('fxLightboxClose');
-      const lbFallback = document.getElementById('fxLightboxFallback');
-
-      function openLightbox(href, title) {
-        lbTitle.textContent = title || '交互预览';
-        lbOpen.href = href;
-        lbFrame.style.display = 'block';
-        lbFallback.style.display = 'none';
-        lbFrame.src = href;
-        lightbox.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-      }
-      function closeLightbox() {
-        lightbox.style.display = 'none';
-        lbFrame.src = 'about:blank';
-        document.body.style.overflow = '';
-      }
-      lbClose.addEventListener('click', closeLightbox);
-      lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && lightbox.style.display === 'flex') closeLightbox();
-      });
-      lbFrame.addEventListener('error', () => {
-        lbFrame.style.display = 'none';
-        lbFallback.style.display = 'block';
-      });
-
       cards.forEach(card => {
         const popup = card.querySelector('.ai-popup-img');
         if (popup) {
@@ -4709,15 +4677,15 @@
             else updatePopupPos({});
           }, { passive: true });
         }
-        // 点击卡片 -> 打开内嵌交互预览灯箱（直接在当前页交互，无需切到外部标签页）
+        // 点击卡片 -> 在新标签页打开交互demo（需要摄像头/手势等完整浏览器权限，iframe无法提供）
         const href = card.getAttribute('data-href');
         const title = (card.querySelector('.ai-card-title') || {}).textContent || '';
         if (href) {
           card.style.cursor = 'pointer';
           card.setAttribute('role', 'button');
           card.setAttribute('tabindex', '0');
-          card.setAttribute('aria-label', title + ' · 开启交互预览');
-          const go = () => openLightbox(href, title);
+          card.setAttribute('aria-label', title + ' · 开启交互');
+          const go = () => window.open(href, '_blank', 'noopener,noreferrer');
           card.addEventListener('click', go);
           card.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
