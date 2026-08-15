@@ -3784,6 +3784,7 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
 <!-- ScrollStack · 原生实现，无 React / Lenis 依赖（证书专栏堆叠滚动核心） -->
 <script src="components/ScrollStack/ScrollStack.native.js"></script>
+<script src="ai-images-data.js"></script>
 <script>
   /* ============================================================
      StrokeText 动效（基于 React Bits 重构为原生 JS）
@@ -4648,10 +4649,7 @@
     ];
 
     const aiWrap = document.getElementById('aiPracticeWrap');
-    // 预加载 AI 图片（页面空闲时就开始下载，hover 时直接从缓存读取）
-    aiProjects.forEach(proj => {
-      if (proj.imageWebp) { new Image().src = proj.imageWebp; }
-    });
+    // AI 图片已内嵌为 Base64 Data URI，无需预加载（零网络依赖）
     aiProjects.forEach((proj, idx) => {
       const card = document.createElement('div');
       card.className = 'ai-card' + (proj.featured ? ' featured' : '');
@@ -4667,7 +4665,8 @@
         popup.className += ' has-image';
         // 用 <img> 标签实现加载状态 + 错误兜底（CSS background-image 无法检测加载失败）
         const img = document.createElement('img');
-        img.src = proj.imageWebp;
+        // 优先使用内嵌 Base64 Data URI（零网络依赖，秒开）
+        img.src = (typeof AI_IMAGES_DATA !== 'undefined' && AI_IMAGES_DATA[proj.imageWebp]) || proj.imageWebp;
         img.alt = proj.title || ('AI' + (idx + 1));
         img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:12px;opacity:0;transition:opacity 0.3s;';
         const loader = document.createElement('div');
