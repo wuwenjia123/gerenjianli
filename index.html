@@ -2159,62 +2159,34 @@
       border-color: rgba(255,255,255,0.45);
     }
     /* 移动端海报占位：不嵌入真实 PDF，避免浏览器接管/弹下载 */
-    .ppt-poster {
+    /* PPT 卡片直接显示页面图片（无绿色外壳） */
+    .ppt-cover-img {
       position: absolute;
       inset: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 0.35rem;
-      text-align: center;
-      padding: 0.9rem;
-      background: linear-gradient(135deg, #1F2E26 0%, #245A40 58%, #2F6B4F 100%);
-      color: #F2F9F4;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #fff;
+      display: block;
     }
-    .ppt-poster-badge {
+    /* 页码角标：左上角半透明小标签，不遮挡 PPT 内容 */
+    .ppt-page-tag {
+      position: absolute;
+      top: 0.6rem;
+      left: 0.6rem;
+      z-index: 3;
       font-family: var(--font-mono);
       font-size: 0.62rem;
       font-weight: 800;
-      letter-spacing: 0.16em;
-      padding: 0.18rem 0.5rem;
+      letter-spacing: 0.14em;
+      padding: 0.22rem 0.55rem;
       border-radius: 999px;
-      background: rgba(255,255,255,0.18);
-      border: 1px solid rgba(255,255,255,0.28);
-      flex-shrink: 0;
-    }
-    .ppt-cover-img {
-      max-width: 94%;
-      max-height: 52%;
-      width: auto;
-      height: auto;
-      border-radius: 6px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-      background: #fff;
-      flex-shrink: 1;
-      object-fit: contain;
-    }
-    .ppt-poster-title {
-      font-size: 1rem;
-      font-weight: 800;
-      letter-spacing: 0.03em;
-      line-height: 1.25;
-      max-width: 92%;
-      flex-shrink: 0;
-    }
-    .ppt-poster-sub {
-      font-size: 0.65rem;
-      opacity: 0.82;
-      letter-spacing: 0.12em;
-      flex-shrink: 0;
-    }
-    .ppt-poster-hint {
-      margin-top: 0.15rem;
-      font-size: 0.62rem;
-      font-weight: 700;
-      opacity: 0.78;
-      letter-spacing: 0.06em;
-      flex-shrink: 0;
+      color: #fff;
+      background: rgba(20, 30, 24, 0.62);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.22);
+      pointer-events: none;
     }
 
     .ppt-stack-card.side-prev {
@@ -4805,13 +4777,8 @@
         card.className = 'ppt-stack-card';
         card.dataset.index = String(i);
         card.innerHTML = `
-          <div class="ppt-poster">
-            <div class="ppt-poster-badge">P${pad2(item.page)}</div>
-            <img class="ppt-cover-img" src="${item.image}" alt="${item.title} 第${item.page}页" loading="lazy">
-            <div class="ppt-poster-title">${item.title}</div>
-            <div class="ppt-poster-sub">${item.sub}</div>
-            <div class="ppt-poster-hint">点击查看完整报告</div>
-          </div>
+          <img class="ppt-cover-img" src="${item.image}" alt="${item.title} 第${item.page}页" loading="lazy">
+          <span class="ppt-page-tag">P${pad2(item.page)}</span>
         `;
         // 点击中间卡片 → 新标签页打开对应 PDF 页面
         card.addEventListener('click', () => {
