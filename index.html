@@ -2111,13 +2111,52 @@
         z-index 0s linear;
       will-change: transform, opacity;
     }
-    .ppt-stack-card iframe {
+    .ppt-stack-card iframe,
+    .ppt-stack-card object {
       position: absolute;
       inset: 0;
       width: 100%; height: 100%;
       border: none;
       background: #fff;
       pointer-events: none;
+    }
+    /* PDF 内嵌失败时的 fallback（浏览器不支持 PDF 渲染时显示） */
+    .ppt-pdf-fallback {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      text-align: center;
+      padding: 1rem;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e8e8e8;
+    }
+    .ppt-pdf-fallback .ppt-cover-img {
+      width: auto; max-width: 70%; height: auto; max-height: 45%;
+      border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+      object-fit: contain;
+    }
+    .ppt-fallback-link {
+      display: inline-block;
+      margin-top: 0.3rem;
+      padding: 0.45rem 1rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #fff;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 6px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      pointer-events: auto;
+    }
+    .ppt-fallback-link:hover {
+      background: rgba(255,255,255,0.22);
+      border-color: rgba(255,255,255,0.45);
     }
     /* 移动端海报占位：不嵌入真实 PDF，避免浏览器接管/弹下载 */
     .ppt-poster {
@@ -4772,10 +4811,18 @@
         } else {
           card.innerHTML = `
             <div class="ppt-page-badge">P${pad2(item.page)}</div>
-            <iframe
-              src="${PDF}#page=${item.page}&toolbar=0&navpanes=0&view=FitH"
-              title="${item.title} · 第 ${item.page} 页"
-              loading="lazy"></iframe>
+            <object
+              data="${PDF}#page=${item.page}&toolbar=0&navpanes=0&view=FitH"
+              type="application/pdf"
+              title="${item.title} · 第 ${item.page} 页">
+              <div class="ppt-pdf-fallback">
+                <div class="ppt-poster-badge">P${pad2(item.page)}</div>
+                <img class="ppt-cover-img" src="ppt-cover.png" alt="${item.title} 封面" loading="lazy">
+                <div class="ppt-poster-title">${item.title}</div>
+                <div class="ppt-poster-sub">${item.sub}</div>
+                <a class="ppt-fallback-link" href="${PDF}#page=${item.page}&toolbar=1&navpanes=0&view=FitH" target="_blank" rel="noopener">点击在新标签页打开 PDF</a>
+              </div>
+            </object>
             <div class="ppt-card-title">
               <span>${item.title}</span>
               <span class="ppt-title-sub">${item.sub}</span>
