@@ -4665,8 +4665,6 @@
         popup.className += ' has-image';
         // 用 <img> 标签实现加载状态 + 错误兜底（CSS background-image 无法检测加载失败）
         const img = document.createElement('img');
-        // 优先使用内嵌 Base64 Data URI（零网络依赖，秒开）
-        img.src = (typeof AI_IMAGES_DATA !== 'undefined' && AI_IMAGES_DATA[proj.imageWebp]) || proj.imageWebp;
         img.alt = proj.title || ('AI' + (idx + 1));
         img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:12px;opacity:0;transition:opacity 0.3s;';
         const loader = document.createElement('div');
@@ -4676,6 +4674,7 @@
         errLabel.className = 'ai-popup-err';
         errLabel.textContent = '图片加载中...';
         errLabel.style.cssText = 'display:none;color:#999;font-size:12px;';
+        // 先绑定事件，再设置 src（Base64 可能同步触发 onload）
         img.onload = () => { img.style.opacity = '1'; loader.style.display = 'none'; errLabel.style.display = 'none'; };
         img.onerror = () => {
           loader.style.display = 'none';
@@ -4683,6 +4682,10 @@
           errLabel.style.display = '';
           popup.style.background = '#f5f5f5';
         };
+        // 优先使用内嵌 Base64 Data URI（零网络依赖，秒开）
+        img.src = (typeof AI_IMAGES_DATA !== 'undefined' && AI_IMAGES_DATA[proj.imageWebp]) || proj.imageWebp;
+        // Base64 可能同步加载完成（onload 已触发或即将触发），立即检查并显示
+        if (img.complete) { img.style.opacity = '1'; loader.style.display = 'none'; }
         // 超时兜底：5秒后显示提示（但不放弃，图片加载完后仍会自动显示）
         setTimeout(() => {
           if (!img.complete || img.naturalWidth === 0) {
@@ -4693,7 +4696,10 @@
         popup.appendChild(img);
         popup.appendChild(loader);
         popup.appendChild(errLabel);
-        popup.innerHTML += '<span class="ai-popup-img-label">AI' + (idx + 1) + '</span>';
+        const label = document.createElement('span');
+        label.className = 'ai-popup-img-label';
+        label.textContent = 'AI' + (idx + 1);
+        popup.appendChild(label);
       } else {
         popup.innerHTML = '<span class="ai-popup-img-label">AI' + (idx + 1) + '.png</span>';
       }
