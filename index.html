@@ -3679,40 +3679,9 @@
 
     <div class="ai-practice-wrap ppt-showcase-wrap reveal-delay-2">
       <div class="ppt-stage" id="pptStage">
-        <!-- 堆叠卡片容器：左(prev) 中(main) 右(next) -->
+        <!-- 静态单张封面：只展示第一张 PPT 封面 -->
         <div class="ppt-stack" id="pptStack">
           <!-- 卡片由 JS 渲染 -->
-        </div>
-
-        <!-- 左右按钮 -->
-        <button class="ppt-stack-btn prev" id="pptPrev" aria-label="上一个">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M15 6l-6 6 6 6"/>
-          </svg>
-        </button>
-        <button class="ppt-stack-btn next" id="pptNext" aria-label="下一个">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M9 6l6 6-6 6"/>
-          </svg>
-        </button>
-      </div>
-
-      <!-- 底部：当前index/总数 + 两侧墨绿进度细线 -->
-      <div class="ppt-progress-row">
-        <div class="ppt-progress-lines">
-          <div class="ppt-progress-line left">
-            <div class="ppt-progress-line-fill" id="pptFillLeft"></div>
-          </div>
-          <div class="ppt-progress-line right">
-            <div class="ppt-progress-line-fill" id="pptFillRight"></div>
-          </div>
-        </div>
-        <div class="ppt-progress-count">
-          <span id="pptIdxNow">01</span>
-          <span class="ppt-progress-slash">/</span>
-          <span id="pptIdxTotal">12</span>
         </div>
       </div>
     </div>
@@ -4774,157 +4743,27 @@
       });
     })();
 
-    // ============ PPT堆叠封面轮播：中间大封面 + 前后小封面叠加 + 左右按钮 + 墨绿进度细线 ============
-    (function initPptStackCarousel() {
-      const stack     = document.getElementById('pptStack');
-      const btnPrev   = document.getElementById('pptPrev');
-      const btnNext   = document.getElementById('pptNext');
-      const idxNowEl  = document.getElementById('pptIdxNow');
-      const idxTotalEl= document.getElementById('pptIdxTotal');
-      const fillLeft  = document.getElementById('pptFillLeft');
-      const fillRight = document.getElementById('pptFillRight');
-      const stage     = document.getElementById('pptStage');
-      if (!stack || !btnPrev || !btnNext) return;
+    // ============ PPT 静态单张封面展示（只显示第一张，点击打开完整 PDF） ============
+    (function initPptSingleCover() {
+      const stack = document.getElementById('pptStack');
+      if (!stack) return;
 
       const PDF = '智足科技数据赋能鞋业.pdf';
-      // 统一使用封面海报模式（object/embed 内嵌 PDF 在国外网络不可靠，容易触发 fallback）
-      // 桌面端点击卡片时新标签页打开 PDF
-      const PAGES = Array.from({ length: 12 }, (_, i) => ({
-        page:   i + 1,
-        title:  '智足科技数据赋能鞋业',
-        sub:    `SLIDE ${String(i + 1).padStart(2, '0')} / 12`,
-      }));
-      const TOTAL = PAGES.length;
-      let current = 0; // 0-based
-
-      function pad2(n) { return String(n).padStart(2, '0'); }
-
-      // 渲染全部卡片（统一封面海报模式，点击中间卡片打开 PDF）
-      PAGES.forEach((item, i) => {
-        const card = document.createElement('div');
-        card.className = 'ppt-stack-card';
-        card.dataset.index = String(i);
-        // 统一使用封面海报：加载快、国内外一致、无 PDF 嵌入兼容问题
-        card.innerHTML = `
-          <div class="ppt-poster">
-            <div class="ppt-poster-badge">P${pad2(item.page)}</div>
-            <img class="ppt-cover-img" src="ppt-cover.png" alt="${item.title} 封面" loading="lazy">
-            <div class="ppt-poster-title">${item.title}</div>
-            <div class="ppt-poster-sub">${item.sub}</div>
-            <div class="ppt-poster-hint">点击查看完整报告</div>
-          </div>
-        `;
-        // 点击中间卡片 → 新标签页打开对应 PDF 页面
-        card.addEventListener('click', () => {
-          if (i !== current) { goTo(i); return; }
-          window.open(`${PDF}#page=${item.page}&toolbar=1&navpanes=0&view=FitH`, '_blank', 'noopener');
-        });
-        stack.appendChild(card);
+      const card = document.createElement('div');
+      card.className = 'ppt-stack-card side-main';
+      card.innerHTML = `
+        <div class="ppt-poster">
+          <div class="ppt-poster-badge">P01</div>
+          <img class="ppt-cover-img" src="ppt-cover.png" alt="智足科技数据赋能鞋业 封面">
+          <div class="ppt-poster-title">智足科技数据赋能鞋业</div>
+          <div class="ppt-poster-sub">SLIDE 01 / 12</div>
+          <div class="ppt-poster-hint">点击查看完整报告 ↗</div>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        window.open(`${PDF}#page=1&toolbar=1&navpanes=0&view=FitH`, '_blank', 'noopener');
       });
-      const cards = Array.from(stack.querySelectorAll('.ppt-stack-card'));
-
-      function applyClasses() {
-        cards.forEach((card, i) => {
-          const offset = i - current;
-          let cls = '';
-          if (offset === 0)        cls = 'side-main';
-          else if (offset === -1)  cls = 'side-prev';
-          else if (offset ===  1)  cls = 'side-next';
-          else if (offset === -2)  cls = 'side-far-prev';
-          else if (offset ===  2)  cls = 'side-far-next';
-          else if (offset < -2)    cls = 'side-far-prev';
-          else                     cls = 'side-far-next';
-
-          card.classList.remove('side-main','side-prev','side-next','side-far-prev','side-far-next');
-          card.classList.add(cls);
-        });
-        // 计数
-        if (idxNowEl)   idxNowEl.textContent   = pad2(current + 1);
-        if (idxTotalEl) idxTotalEl.textContent = pad2(TOTAL);
-        // 进度细线：左线表示「已走过的比例」从右端向左填充；右线表示「剩余/推进」从左端向右填充
-        const ratio = TOTAL <= 1 ? 0 : (current) / (TOTAL - 1);
-        if (fillLeft)  fillLeft.style.width  = (ratio * 100).toFixed(2) + '%';
-        if (fillRight) fillRight.style.width = (ratio * 100).toFixed(2) + '%';
-        // 按钮禁用态
-        btnPrev.disabled = current === 0;
-        btnNext.disabled = current === TOTAL - 1;
-      }
-
-      function goTo(i) {
-        if (i < 0) i = 0;
-        if (i > TOTAL - 1) i = TOTAL - 1;
-        if (i === current) return;
-        current = i;
-        applyClasses();
-      }
-
-      btnPrev.addEventListener('click', () => goTo(current - 1));
-      btnNext.addEventListener('click', () => goTo(current + 1));
-
-      // 键盘左右（仅当 PPT 舞台进入视口时）
-      window.addEventListener('keydown', (e) => {
-        if (!stage) return;
-        const rect = stage.getBoundingClientRect();
-        const inView = rect.top < window.innerHeight * 0.85 && rect.bottom > 80;
-        if (!inView) return;
-        if (e.key === 'ArrowLeft')  { e.preventDefault(); goTo(current - 1); }
-        if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1); }
-      }, { passive: false });
-
-      // 鼠标拖拽 / 触屏滑动（横向）
-      let pointerDown = false;
-      let startX = 0;
-      let deltaX = 0;
-      let moved = false;
-      function onDown(e) {
-        if (e.target.closest('button')) return;
-        pointerDown = true;
-        moved = false;
-        startX = (e.touches ? e.touches[0].clientX : e.clientX);
-        deltaX = 0;
-      }
-      function onMove(e) {
-        if (!pointerDown) return;
-        const x = (e.touches ? e.touches[0].clientX : e.clientX);
-        deltaX = x - startX;
-        if (Math.abs(deltaX) > 6) moved = true;
-      }
-      function onUp() {
-        if (!pointerDown) return;
-        pointerDown = false;
-        if (moved && Math.abs(deltaX) > 48) {
-          if (deltaX < 0) goTo(current + 1);
-          else            goTo(current - 1);
-        }
-        deltaX = 0;
-      }
-      if (stage) {
-        stage.addEventListener('mousedown', onDown);
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup',   onUp);
-        stage.addEventListener('touchstart', onDown, { passive: true });
-        stage.addEventListener('touchmove',  onMove, { passive: true });
-        stage.addEventListener('touchend',   onUp);
-      }
-
-      // 滚轮映射：横向滚轮 / 纵向滚轮 → 左右切换（仅作用于 PPT 舞台上方时）
-      let wheelLock = false;
-      if (stage) {
-        stage.addEventListener('wheel', (e) => {
-          if (wheelLock) return;
-          const dx = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-          if (Math.abs(dx) < 18) return;
-          e.preventDefault();
-          wheelLock = true;
-          setTimeout(() => { wheelLock = false; }, 280);
-          if (dx > 0) goTo(current + 1);
-          else        goTo(current - 1);
-        }, { passive: false });
-      }
-
-      applyClasses();
-
-      // 手机端仅展示 PPT 示意图（见移动端海报），不加载 PDF，避免触发下载
+      stack.appendChild(card);
     })();
 
     // ============ 作品入口色块：拖动 / 滚轮 / 手指横滑（丝滑版）+ 点击跳转 ============
