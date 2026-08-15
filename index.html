@@ -4787,9 +4787,8 @@
       if (!stack || !btnPrev || !btnNext) return;
 
       const PDF = '智足科技数据赋能鞋业.pdf';
-      // 移动端（触屏/小屏）浏览器会接管 iframe 内的 PDF 并弹出下载，因此用海报占位、不加载真实 PDF
-      const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches || window.innerWidth <= 768;
-      // 以 PDF 共 12 页作为 12 个「PPT封面」展示
+      // 统一使用封面海报模式（object/embed 内嵌 PDF 在国外网络不可靠，容易触发 fallback）
+      // 桌面端点击卡片时新标签页打开 PDF
       const PAGES = Array.from({ length: 12 }, (_, i) => ({
         page:   i + 1,
         title:  '智足科技数据赋能鞋业',
@@ -4800,47 +4799,24 @@
 
       function pad2(n) { return String(n).padStart(2, '0'); }
 
-      // 渲染全部卡片（全部放入 DOM，通过位置类控制前后/主/远的视觉）
+      // 渲染全部卡片（统一封面海报模式，点击中间卡片打开 PDF）
       PAGES.forEach((item, i) => {
         const card = document.createElement('div');
         card.className = 'ppt-stack-card';
         card.dataset.index = String(i);
-        if (isMobile) {
-          // 移动端：直接展示 PPT 首页封面图（不嵌入 PDF，避免浏览器接管/弹下载）
-          card.innerHTML = `
-            <div class="ppt-poster">
-              <div class="ppt-poster-badge">P${pad2(item.page)}</div>
-              <img class="ppt-cover-img" src="ppt-cover.png" alt="${item.title} 封面" loading="lazy">
-              <div class="ppt-poster-title">${item.title}</div>
-              <div class="ppt-poster-sub">${item.sub}</div>
-              <div class="ppt-poster-hint">在电脑端才能完整阅读</div>
-            </div>
-          `;
-        } else {
-          card.innerHTML = `
-            <div class="ppt-page-badge">P${pad2(item.page)}</div>
-            <object
-              data="${PDF}#page=${item.page}&toolbar=0&navpanes=0&view=FitH"
-              type="application/pdf"
-              title="${item.title} · 第 ${item.page} 页">
-              <div class="ppt-pdf-fallback">
-                <div class="ppt-poster-badge">P${pad2(item.page)}</div>
-                <img class="ppt-cover-img" src="ppt-cover.png" alt="${item.title} 封面" loading="lazy">
-                <div class="ppt-poster-title">${item.title}</div>
-                <div class="ppt-poster-sub">${item.sub}</div>
-                <a class="ppt-fallback-link" href="${PDF}#page=${item.page}&toolbar=1&navpanes=0&view=FitH" target="_blank" rel="noopener">点击在新标签页打开 PDF</a>
-              </div>
-            </object>
-            <div class="ppt-card-title">
-              <span>${item.title}</span>
-              <span class="ppt-title-sub">${item.sub}</span>
-            </div>
-          `;
-        }
-        // 点击中间卡片 → 桌面端新标签打开对应 PDF 页面；移动端仅展示示意图，不打开文件（避免触发下载）
+        // 统一使用封面海报：加载快、国内外一致、无 PDF 嵌入兼容问题
+        card.innerHTML = `
+          <div class="ppt-poster">
+            <div class="ppt-poster-badge">P${pad2(item.page)}</div>
+            <img class="ppt-cover-img" src="ppt-cover.png" alt="${item.title} 封面" loading="lazy">
+            <div class="ppt-poster-title">${item.title}</div>
+            <div class="ppt-poster-sub">${item.sub}</div>
+            <div class="ppt-poster-hint">点击查看完整报告</div>
+          </div>
+        `;
+        // 点击中间卡片 → 新标签页打开对应 PDF 页面
         card.addEventListener('click', () => {
           if (i !== current) { goTo(i); return; }
-          if (isMobile) return;
           window.open(`${PDF}#page=${item.page}&toolbar=1&navpanes=0&view=FitH`, '_blank', 'noopener');
         });
         stack.appendChild(card);
