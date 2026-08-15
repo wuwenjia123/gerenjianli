@@ -4654,8 +4654,8 @@
           errLabel.style.display = '';
           popup.style.background = '#f5f5f5';
         };
-        // 优先使用内嵌 Base64 Data URI（零网络依赖，秒开）
-        img.src = (typeof AI_IMAGES_DATA !== 'undefined' && AI_IMAGES_DATA[proj.imageWebp]) || proj.imageWebp;
+        // 提交源码版：直接用 .webp 文件路径（本地 file:// 和线上 http:// 均可正常加载）
+        img.src = proj.imageWebp;
         // Base64 可能同步加载完成（onload 已触发或即将触发），立即检查并显示
         if (img.complete) { img.style.opacity = '1'; loader.style.display = 'none'; }
         // 超时兜底：5秒后显示提示（但不放弃，图片加载完后仍会自动显示）
