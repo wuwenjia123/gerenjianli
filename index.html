@@ -4648,6 +4648,10 @@
     ];
 
     const aiWrap = document.getElementById('aiPracticeWrap');
+    // 预加载 AI 图片（页面空闲时就开始下载，hover 时直接从缓存读取）
+    aiProjects.forEach(proj => {
+      if (proj.imageWebp) { new Image().src = proj.imageWebp; }
+    });
     aiProjects.forEach((proj, idx) => {
       const card = document.createElement('div');
       card.className = 'ai-card' + (proj.featured ? ' featured' : '');
@@ -4680,14 +4684,13 @@
           errLabel.style.display = '';
           popup.style.background = '#f5f5f5';
         };
-        // 超时兜底：8秒后显示提示
+        // 超时兜底：5秒后显示提示（但不放弃，图片加载完后仍会自动显示）
         setTimeout(() => {
           if (!img.complete || img.naturalWidth === 0) {
-            loader.style.display = 'none';
-            errLabel.textContent = '加载较慢，请稍候或刷新';
+            errLabel.textContent = '图片加载中...';
             errLabel.style.display = '';
           }
-        }, 8000);
+        }, 5000);
         popup.appendChild(img);
         popup.appendChild(loader);
         popup.appendChild(errLabel);
