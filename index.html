@@ -3712,7 +3712,7 @@
         <div class="ppt-progress-count">
           <span id="pptIdxNow">01</span>
           <span class="ppt-progress-slash">/</span>
-          <span id="pptIdxTotal">12</span>
+          <span id="pptIdxTotal">15</span>
         </div>
       </div>
     </div>
@@ -4787,28 +4787,27 @@
       if (!stack || !btnPrev || !btnNext) return;
 
       const PDF = '智足科技数据赋能鞋业.pdf';
-      // 统一使用封面海报模式（object/embed 内嵌 PDF 在国外网络不可靠，容易触发 fallback）
-      // 桌面端点击卡片时新标签页打开 PDF
-      const PAGES = Array.from({ length: 12 }, (_, i) => ({
+      // 每张卡片显示 PDF 对应页的真实截图（已预渲染为 ppt-page-01.webp ~ ppt-page-15.webp）
+      const PAGES = Array.from({ length: 15 }, (_, i) => ({
         page:   i + 1,
         title:  '智足科技数据赋能鞋业',
-        sub:    `SLIDE ${String(i + 1).padStart(2, '0')} / 12`,
+        sub:    `SLIDE ${String(i + 1).padStart(2, '0')} / 15`,
+        image:  `ppt-page-${String(i + 1).padStart(2, '0')}.webp`,
       }));
       const TOTAL = PAGES.length;
       let current = 0; // 0-based
 
       function pad2(n) { return String(n).padStart(2, '0'); }
 
-      // 渲染全部卡片（统一封面海报模式，点击中间卡片打开 PDF）
+      // 渲染全部卡片（每张显示对应页的真实内容）
       PAGES.forEach((item, i) => {
         const card = document.createElement('div');
         card.className = 'ppt-stack-card';
         card.dataset.index = String(i);
-        // 统一使用封面海报：加载快、国内外一致、无 PDF 嵌入兼容问题
         card.innerHTML = `
           <div class="ppt-poster">
             <div class="ppt-poster-badge">P${pad2(item.page)}</div>
-            <img class="ppt-cover-img" src="ppt-cover.png" alt="${item.title} 封面" loading="lazy">
+            <img class="ppt-cover-img" src="${item.image}" alt="${item.title} 第${item.page}页" loading="lazy">
             <div class="ppt-poster-title">${item.title}</div>
             <div class="ppt-poster-sub">${item.sub}</div>
             <div class="ppt-poster-hint">点击查看完整报告</div>
