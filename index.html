@@ -958,6 +958,109 @@
       line-height: 1.7;
     }
 
+    /* ============ 教育背景行（左教育 + 右留言卡） ============ */
+    .edu-row {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .edu-row .edu-card { flex: 1; min-width: 280px; max-width: 520px; }
+
+    /* ============ 书页风格留言卡片 (Newsletter Card) ============ */
+    .nl-card {
+      flex: 0 0 300px;
+      position: relative;
+    }
+    .nl-page {
+      background: #fff;
+      border: 2px solid #1a1a1a;
+      border-radius: 4px;
+      padding: 28px 24px 24px;
+      box-shadow:
+        12px 12px 0 #000,
+        0 4px 16px rgba(0,0,0,0.10);
+      position: relative;
+      transition: transform 0.35s ease, box-shadow 0.35s ease;
+    }
+    /* 书页底部深绿色装订线效果 */
+    .nl-page::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 6px;
+      background: #1B4332;
+      border-radius: 0 0 2px 2px;
+    }
+    .nl-card:hover .nl-page {
+      transform: translate(-5px, -5px);
+      box-shadow:
+        17px 17px 0 #000,
+        0 8px 24px rgba(0,0,0,0.14);
+    }
+    .nl-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #1B4332;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 12px;
+      line-height: 1.15;
+    }
+    .nl-sub {
+      font-size: 14px;
+      color: #1B4332;
+      line-height: 1.6;
+      margin-bottom: 18px;
+      opacity: 0.82;
+    }
+    .nl-input {
+      width: 100%;
+      border: 2px solid #1a1a1a;
+      border-radius: 3px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #1B4332;
+      background: #fafafa;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-bottom: 14px;
+      box-sizing: border-box;
+    }
+    .nl-input::placeholder { color: #999; }
+    .nl-input:focus {
+      border-color: #1B4332;
+      box-shadow: 0 0 0 3px rgba(27,67,50,0.12);
+    }
+    .nl-btn {
+      display: inline-block;
+      background: #1a1a1a;
+      color: #fff;
+      border: 2px solid #1a1a1a;
+      border-radius: 3px;
+      padding: 10px 28px;
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .nl-btn:hover {
+      background: #1B4332;
+      border-color: #1B4332;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(27,67,50,0.30);
+    }
+    .nl-btn:active { transform: translateY(0); }
+
+    /* 手机端：留言卡折到下方 */
+    @media (max-width: 680px) {
+      .nl-card { flex: 1 1 100%; min-width: unset; }
+      .nl-page { padding: 22px 18px 20px; }
+    }
+
     /* ============ AI 编程实战板块 ============ */
     .ai-practice-header { margin-bottom: 1.5rem; }
 
@@ -3889,13 +3992,24 @@
     <div class="card-grid" id="skillsGrid"></div>
   </section>
 
-  <!-- 教育背景 -->
+  <!-- 教育背景 + 留言卡片 -->
   <section class="section reveal reveal-delay-11">
     <div class="section-title">EDUCATION</div>
-    <div class="edu-card">
-      <div class="edu-school">杭州师范大学</div>
-      <div class="edu-info">本科 · 2026.09 – 2030.06 (预计)</div>
-      <div class="edu-desc">📚 小学教育方向 · 准大一即获阿里云6项认证</div>
+    <div class="edu-row">
+      <div class="edu-card">
+        <div class="edu-school">杭州师范大学</div>
+        <div class="edu-info">本科 · 2026.09 – 2030.06 (预计)</div>
+        <div class="edu-desc">📚 小学教育方向 · 准大一即获阿里云6项认证</div>
+      </div>
+      <!-- 书页风格留言卡片 -->
+      <div class="nl-card">
+        <div class="nl-page">
+          <div class="nl-title">Get Ready</div>
+          <div class="nl-sub">你有什么想法</div>
+          <input class="nl-input" type="text" placeholder="your thoughts" maxlength="200">
+          <button class="nl-btn" type="button">发送</button>
+        </div>
+      </div>
     </div>
   </section>
 
