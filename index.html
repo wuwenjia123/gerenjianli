@@ -1034,26 +1034,49 @@
       box-shadow: 0 0 0 3px rgba(27,67,50,0.12);
     }
     .nl-btn {
+      position: relative;
       display: inline-block;
-      background: #1a1a1a;
-      color: #fff;
-      border: 2px solid #1a1a1a;
-      border-radius: 3px;
-      padding: 10px 28px;
+      width: 140px;
+      height: 46px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
       font-size: 14px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      perspective: 600px;
+      transform-style: preserve-3d;
     }
-    .nl-btn:hover {
-      background: #1B4332;
-      border-color: #1B4332;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(27,67,50,0.30);
+    .nl-btn-face {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #1a1a1a;
+      border-radius: 3px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transition: transform 0.55s cubic-bezier(.4,.15,.2,1);
     }
-    .nl-btn:active { transform: translateY(0); }
+    .nl-btn-front {
+      background: #1a1a1a;
+      color: #fff;
+      transform: rotateX(0deg);
+    }
+    .nl-btn-back {
+      background: #2EA86A;
+      border-color: #2EA86A;
+      color: #fff;
+      transform: rotateX(180deg);
+      box-shadow: 0 8px 18px rgba(46,168,106,0.35);
+    }
+    /* 魔方翻转：hover 时绕 X 轴 180° 翻面 */
+    .nl-btn:hover .nl-btn-front { transform: rotateX(-180deg); }
+    .nl-btn:hover .nl-btn-back { transform: rotateX(0deg); }
+    .nl-btn:active { transform: scale(0.97); }
 
     /* 手机端：留言卡折到下方 */
     @media (max-width: 680px) {
@@ -4007,7 +4030,7 @@
           <div class="nl-title">Get Ready</div>
           <div class="nl-sub">你有什么想法</div>
           <input class="nl-input" type="text" placeholder="your thoughts" maxlength="200">
-          <button class="nl-btn" type="button">发送</button>
+          <button class="nl-btn" type="button"><span class="nl-btn-face nl-btn-front">发送</span><span class="nl-btn-face nl-btn-back">收到</span></button>
         </div>
       </div>
     </div>
