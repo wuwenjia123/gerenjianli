@@ -3350,6 +3350,163 @@
     will-change: auto;
   }
 }
+
+/* ============ AI 实战项目 · 墨滴晕染 → 山水画卷开篇 → 轻舟返航 ============ */
+#aiInkStage{
+  position:fixed; inset:0; z-index:9999;
+  pointer-events:none; opacity:0;
+  background:rgba(248,250,247,1);
+  overflow:hidden;
+}
+#aiInkStage.is-open{ pointer-events:auto; }
+#aiInkStage.phase-paper   { opacity:1; transition:opacity .18s ease; }
+#aiInkStage.phase-running { opacity:1; }
+#aiInkStage.phase-out     { opacity:0; transition:opacity .55s ease; }
+.ai-ink-paper{ position:absolute; inset:0; background:linear-gradient(180deg,#f6f4ec 0%,#eef3ec 55%,#e7ede5 100%); }
+.ai-ink-paper::before{
+  content:''; position:absolute; inset:0;
+  background:
+    radial-gradient(70% 50% at 50% 18%, rgba(255,255,255,0.55), transparent 70%),
+    radial-gradient(60% 60% at 50% 95%, rgba(91,121,109,0.16), transparent 70%);
+  mix-blend-mode:multiply; opacity:.7;
+}
+
+.ai-ink-drop{
+  position:absolute; left:0; top:0; width:34px; height:34px; border-radius:50%;
+  background:radial-gradient(circle, #2f6b4f 0%, #1f4a37 38%, rgba(31,74,55,0.72) 70%, rgba(31,74,55,0.0) 100%);
+  transform:translate(-50%,-50%) scale(0); opacity:0;
+  filter:blur(0px);
+}
+#aiInkStage.phase-running .ai-ink-drop{ animation: aiInkDrop 1.0s cubic-bezier(.4,.05,.4,1) forwards; }
+
+@keyframes aiInkDrop{
+  0%   { transform:translate(-50%,-50%) scale(0); opacity:0;  filter:blur(0); }
+  10%  { transform:translate(-50%,-50%) scale(1); opacity:.95; filter:blur(0); }
+  25%  { transform:translate(-50%,-48%) scale(1.05); opacity:.92; filter:blur(2px); }
+  55%  { transform:translate(-50%,-50%) scale(3.6); opacity:.78; filter:blur(14px); }
+  78%  { transform:translate(-50%,-50%) scale(6.4); opacity:.55; filter:blur(28px); }
+  100% { transform:translate(-50%,-50%) scale(9);  opacity:.42; filter:blur(38px); }
+}
+
+.ai-ink-clouds{ position:absolute; inset:0; opacity:0; }
+#aiInkStage.phase-running .ai-ink-clouds{ animation: aiInkClouds 1.0s ease 0.5s forwards; }
+.ai-ink-clouds i{
+  position:absolute; display:block; border-radius:50%;
+  filter:blur(40px); opacity:0;
+  background:radial-gradient(circle, rgba(47,107,79,.55), rgba(47,107,79,0) 70%);
+}
+.ai-ink-clouds i:nth-child(1){ width:560px; height:300px; left:-160px; top:30%;  animation:aiInkCloudMove 9s ease-in-out infinite; }
+.ai-ink-clouds i:nth-child(2){ width:640px; height:360px; right:-180px; top:14%; background:radial-gradient(circle, rgba(123,158,140,.62), transparent 70%); animation:aiInkCloudMove 12s ease-in-out infinite reverse; }
+.ai-ink-clouds i:nth-child(3){ width:520px; height:280px; left:30%; top:60%; background:radial-gradient(circle, rgba(82,118,99,.52), transparent 70%); animation:aiInkCloudMove 10s ease-in-out infinite; }
+.ai-ink-clouds i:nth-child(4){ width:380px; height:200px; left:8%;  top:8%; background:radial-gradient(circle, rgba(255,255,255,.75), transparent 70%); animation:aiInkCloudMove 14s ease-in-out infinite reverse; }
+@keyframes aiInkClouds{
+  0%{ opacity:0; } 100%{ opacity:1; } }
+@keyframes aiInkCloudMove{
+  0%,100%{ transform:translate3d(0,0,0) scale(1); }
+  50%    { transform:translate3d(60px,-22px,0) scale(1.08); }
+}
+
+
+.ai-ink-bg{
+  position:absolute; inset:0; opacity:0;
+  background-image:url('ink-wash-landscape.jpg');
+  background-size:cover; background-position:center;
+  filter:blur(28px) saturate(1.05); transform:scale(1.18);
+}
+#aiInkStage.phase-running .ai-ink-bg{ animation: aiInkBg 0.8s cubic-bezier(.22,.61,.36,1) 1.2s forwards; }
+@keyframes aiInkBg{
+  0%   { opacity:0; filter:blur(28px) saturate(1.05); transform:scale(1.18); }
+  35%  { opacity:.82; filter:blur(16px) saturate(1.05); transform:scale(1.10); }
+  100% { opacity:1; filter:blur(0) saturate(1.06); transform:scale(1.0); } }
+
+/* 出现一抹轻舟从画卷左侧缓慢划过，作为「进入详情」的视觉引导 */
+.ai-ink-boat{
+  position:absolute; left:0; top:62%; width:220px; height:90px;
+  transform:translateX(-260px); opacity:0;
+}
+#aiInkStage.phase-running .ai-ink-boat{ animation: aiInkBoat 3s cubic-bezier(.4,.06,.2,1) 2.6s forwards; }
+@keyframes aiInkBoat{
+  0%   { transform:translateX(-260px); opacity:0; }
+  10%  { opacity:.92; }
+  92%  { transform:translateX(110vw); opacity:.92; }
+  100% { transform:translateX(112vw); opacity:0; }
+}
+
+.ai-ink-modal{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-45%) translateY(18px);
+  width:min(960px, 92vw); max-height:94vh; overflow:auto;
+  padding:36px 44px 32px; border-radius:20px;
+  background:rgba(248,250,247,0.92); backdrop-filter:blur(14px) saturate(1.05);
+  -webkit-backdrop-filter:blur(14px) saturate(1.05);
+  box-shadow:0 30px 80px -20px rgba(31,74,55,.45), 0 4px 18px rgba(0,0,0,.18);
+  border:1px solid rgba(47,107,79,.18);
+  opacity:0;
+  display:flex; flex-direction:column; gap:22px;
+}
+#aiInkStage.phase-running .ai-ink-modal{ animation: aiInkModalIn .8s cubic-bezier(.4,.06,.2,1) 3.6s forwards; }
+@keyframes aiInkModalIn{ 0%{ opacity:0; transform:translate(-50%,-45%) translateY(28px) scale(.96);} 100%{ opacity:1; transform:translate(-50%,-50%) translateY(0) scale(1);} }
+.ai-ink-modal-img{ width:100%; height:auto; display:block; border-radius:16px; box-shadow:0 14px 36px -12px rgba(31,74,55,.45); }
+.ai-ink-modal-head{ display:flex; flex-direction:column; gap:12px; }
+.ai-ink-modal-meta{ display:flex; align-items:center; gap:14px; font-family:var(--font-tech); }
+.ai-ink-modal-num{ font-size:13px; letter-spacing:.22em; font-weight:700; padding:5px 12px; border-radius:6px; background:rgba(47,107,79,.12); color:#1f4a37; }
+.ai-ink-modal-cat{ font-size:13px; letter-spacing:.18em; color:#5b796d; text-transform:uppercase; }
+.ai-ink-modal-title{ font-family:var(--font-display); font-size:clamp(1.7rem,3.4vw,2.4rem); font-weight:900; color:#1f3526; letter-spacing:.01em; margin:0; line-height:1.16; }
+.ai-ink-modal-desc{ font-size:15px; line-height:1.74; color:#33423b; white-space:pre-line; margin:0; }
+.ai-ink-modal-cols{ display:flex; flex-direction:column; gap:24px; }
+.ai-ink-modal-sec{ margin:0; }
+.ai-ink-modal-sec-title{ font-family:var(--font-tech); font-size:12px; letter-spacing:.2em; color:#2f6b4f; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:9px; }
+.ai-ink-modal-sec-title::before{ content:''; width:3px; height:14px; background:#2f6b4f; border-radius:2px; display:inline-block; }
+.ai-ink-modal-overview, .ai-ink-modal-techdetail{ font-size:14.5px; line-height:1.9; color:#33423b; white-space:pre-line; }
+.ai-ink-modal-foot{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding-top:16px; border-top:1px dashed rgba(47,107,79,.28); }
+.ai-ink-modal-tech{ display:flex; flex-wrap:wrap; gap:8px; }
+.ai-ink-modal-tech span{ font-size:12px; padding:6px 12px; border-radius:999px; background:rgba(47,107,79,.10); color:#1f4a37; border:1px solid rgba(47,107,79,.18); }
+.ai-ink-modal-nav{ display:flex; align-items:center; gap:12px; }
+.ai-ink-prev, .ai-ink-next{ font-family:var(--font-tech); font-size:13px; letter-spacing:.16em; padding:10px 18px; border-radius:10px; background:transparent; color:#1f4a37; border:1px solid rgba(47,107,79,.3); cursor:pointer; transition:all .25s ease; }
+.ai-ink-prev:hover, .ai-ink-next:hover{ background:rgba(47,107,79,.10); transform:translateY(-1px); }
+
+.ai-ink-back{
+  position:absolute; top:18px; left:18px; display:flex; flex-direction:column; align-items:center; gap:6px;
+  width:78px; padding:10px 8px 12px; border-radius:16px;
+  background:rgba(248,250,247,.96); border:1px solid rgba(47,107,79,.32);
+  box-shadow:0 12px 30px -8px rgba(31,74,55,.4);
+  font-family:var(--font-tech); font-size:11px; letter-spacing:.18em; color:#1f4a37; cursor:pointer;
+  opacity:0; transform:translateY(-6px) scale(.95);
+}
+#aiInkStage.phase-running .ai-ink-back{ animation: aiInkBackIn .6s cubic-bezier(.4,.06,.2,1) 4.2s forwards; }
+@keyframes aiInkBackIn{ 0%{opacity:0; transform:translateY(-6px) scale(.95);} 100%{opacity:1; transform:translateY(0) scale(1);} }
+.ai-ink-back:hover{ transform:translateY(-2px); box-shadow:0 16px 36px -10px rgba(31,74,55,.5); border-color:rgba(47,107,79,.55); }
+.ai-ink-back:hover .ai-ink-back-boat{ transform:translateX(-4px); }
+.ai-ink-back-boat{ transition:transform .35s cubic-bezier(.4,.06,.2,1); }
+.ai-ink-back svg{ width:64px; height:32px; display:block; overflow:visible; }
+.ai-ink-back span{ user-select:none; }
+
+/* 退出动画：画卷先 blur 增 + opacity 0，模态框先收，0.55s 后整层淡出 */
+#aiInkStage.phase-out .ai-ink-modal{ animation: aiInkModalOut .35s ease forwards; }
+#aiInkStage.phase-out .ai-ink-back   { animation: aiInkBackOut  .35s ease forwards; }
+#aiInkStage.phase-out .ai-ink-bg     { animation: aiInkBgOut    .55s ease forwards; }
+#aiInkStage.phase-out .ai-ink-boat   { animation: aiInkBoatBack 1.2s cubic-bezier(.4,.06,.2,1) forwards; }
+@keyframes aiInkModalOut{ 0%{opacity:1;} 100%{opacity:0; transform:translate(-50%,-50%) translateY(12px) scale(.98);} }
+@keyframes aiInkBackOut { 0%{opacity:1;} 100%{opacity:0; transform:translateY(-6px);} }
+@keyframes aiInkBgOut   { 0%{opacity:1; filter:blur(0);} 100%{opacity:0; filter:blur(20px); transform:scale(1.06);} }
+@keyframes aiInkBoatBack{
+  0%   { transform:translateX(112vw); opacity:0; }
+  10%  { opacity:.9; }
+  100% { transform:translateX(-260px); opacity:0; }
+}
+
+/* 浮层开场（墨滴+画卷弹窗）为主样式；详情在浮层弹窗内完整展示 */
+@media (max-width: 640px){
+  .ai-ink-modal{ padding:26px 18px 22px; gap:18px; }
+  .ai-ink-modal-img{ height:auto; }
+  .ai-ink-modal-cols{ gap:18px; }
+  .ai-ink-modal-foot{ flex-direction:column; align-items:flex-start; gap:14px; }
+  .ai-ink-back{ top:10px; left:10px; }
+  .ai-ink-modal-title{ font-size:1.4rem; }
+  .ai-ink-modal-desc { font-size:14px; line-height:1.7; }
+  .ai-ink-modal-overview, .ai-ink-modal-techdetail{ font-size:13px; line-height:1.65; }
+}
+/* AI 项目卡里不要冒红框，命中 ck skip */
+
 </style>
 <noscript><style>.reveal{opacity:1!important;transform:none!important;animation:none!important}</style></noscript>
 </head>
@@ -3583,6 +3740,7 @@
       </div>
     </div>
     <div class="ai-practice-wrap" id="aiPracticeWrap"></div>
+
   </section>
 
   <!-- 前端动效与游戏 · 放映机板块 -->
@@ -4594,7 +4752,10 @@
       {
         num: '01',
         title: 'DYNAMIC VISUAL WEBSITE',
+        cat: 'AI · 动态网站',
         desc: 'Trae+零前端代码基础 = 动态视觉网站',
+        overview: '本项目是一次「零前端基础 + AI 结对编程」的完整体验：借助 Trae 这类 AI 编程助手，用自然语言描述视觉与交互意图，由它生成并持续打磨 HTML / CSS / JavaScript，最终落地为一个强调动态表现的动态视觉网站。目标是让访客在滚动与悬停中感受叙事节奏，而非静态罗列作品。',
+        techDetail: '· 视觉层全部以 SVG + CSS 关键帧实现，墨滴晕染、山水画卷过渡、模糊到清晰渐变均不依赖任何图片资源，保证可移植。\n· 交互由原生 JavaScript 事件驱动，配合 IntersectionObserver 做入场触发，移动端用媒体查询收起非必要动效。\n· 交付为纯静态站点，源码托管于 GitHub，经 CloudStudio 一键静态发布，本地 / 仓库 / 云端三端同步。',
         date: '2026.3',
         featured: false,
         image: 'AI1.png',
@@ -4603,7 +4764,10 @@
       {
         num: '02',
         title: 'AUTOMATED WORKFLOW',
+        cat: 'AI · 自动化工作流',
         desc: '自动工作流——每日自动化抓取信息，生成日报并推送',
+        overview: '一个面向「信息焦虑」的自动化工作流：每天定时抓取多个来源的关键信息，经 AI 归纳摘要后自动生成结构化日报，并通过消息渠道推送到我的设备。把原本需要手动打开十几个网页的晨间流程，压缩成一条推送即可读完。',
+        techDetail: '· 调度层用定时任务（cron / 云函数）每日触发，抓取阶段对接公开 RSS 与开放 API。\n· 内容处理由大语言模型完成：先去重与相关性过滤，再按固定模板生成「要点 + 摘要 + 来源」的日报。\n· 推送层通过 Webhook / 邮件 / IM 机器人输出，支持失败重试与空内容静默，只在真正有料时才打扰。',
         date: '2026.6',
         featured: true,
         image: 'AI2.png',
@@ -4612,18 +4776,21 @@
       {
         num: '03',
         title: 'PERSONAL AI EMPLOYEE',
+        cat: 'AI · 私人智能体',
         desc: '系统提示词学习 + 固定提示词 = 私人AI雇员',
+        overview: '把「系统提示词学习」与「固定角色提示词」结合，打造一个拥有长期记忆、稳定人设的私人 AI 雇员：它清楚我的偏好、常用工具与目标，能在日常任务中主动推进，而不是每次都从零解释需求。',
+        techDetail: '· 角色层用固定 System Prompt 锁定人设与边界，避免每次对话风格漂移。\n· 记忆层定期把对话中沉淀的偏好与约定写入长期记忆，下次直接调用，减少重复交代。\n· 执行层通过工具 / 函数调用串联检索、文件与通知，把「问一句做一步」升级为「给目标，它跟进」。',
         date: '2025.12',
         featured: false,
         image: 'AI3.png',
         imageWebp: 'AI3.webp'
       }
     ];
-
-    const aiWrap = document.getElementById('aiPracticeWrap');
+const aiWrap = document.getElementById('aiPracticeWrap');
     // AI 图片已内嵌为 Base64 Data URI，无需预加载（零网络依赖）
+        window.__aiProjects = aiProjects;
     aiProjects.forEach((proj, idx) => {
-      const card = document.createElement('div');
+const card = document.createElement('div');
       card.className = 'ai-card' + (proj.featured ? ' featured' : '');
 
       // 效果1：白色渐变覆盖层
@@ -4701,6 +4868,7 @@
         popup.style.top = relY + 'px';
       };
       card.addEventListener('mousemove', updatePopupPos);
+      
       card.addEventListener('mouseenter', updatePopupPos);
 
       // 触屏设备兼容
@@ -4711,7 +4879,19 @@
       }, { passive: true });
 
       // 点击栏目进入详情页
-      const goDetail = () => { window.location.href = 'ai-detail.html?id=' + proj.num; };
+      // 点击栏目进入详情页
+      const goDetail = (ev) => {
+        if (typeof window.playInkScroll === 'function') {
+          const rect = card.getBoundingClientRect();
+          const cx = (ev && typeof ev.clientX === 'number') ? ev.clientX : (rect.left + rect.width / 2);
+          const cy = (ev && typeof ev.clientY === 'number') ? ev.clientY : (rect.top + rect.height / 2);
+          window.playInkScroll(proj.num, cx, cy);
+        } else if (typeof window.openAIDetail === 'function') {
+          window.openAIDetail(proj.num);
+        } else {
+          window.location.href = 'ai-detail.html?id=' + proj.num;
+        }
+      };
       card.addEventListener('click', goDetail);
       card.setAttribute('role', 'link');
       card.setAttribute('tabindex', '0');
@@ -5239,5 +5419,228 @@
     }
   })();
 </script>
+
+  <!-- AI 实战项目开篇 · 墨滴晕染 → 山水画卷 → 轻舟 -->
+  <div id="aiInkStage" role="dialog" aria-modal="true" aria-label="AI 实战项目开篇">
+    <div class="ai-ink-paper"></div>
+    <div class="ai-ink-clouds"><i></i><i></i><i></i><i></i></div>
+
+
+    <div class="ai-ink-bg" id="aiInkBg"></div>
+    <div class="ai-ink-boat" id="aiInkBoat" aria-hidden="true">
+      <svg viewBox="0 0 220 90" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="aiBoatSoft"><feGaussianBlur stdDeviation="0.6"/></filter>
+        </defs>
+        <!-- 水面投影 -->
+        <ellipse cx="110" cy="74" rx="78" ry="6" fill="rgba(31,74,55,.32)"/>
+        <!-- 船身 -->
+        <path d="M22,58 Q110,90 198,58 L182,40 L38,40 Z" fill="#3a5848"/>
+        <path d="M30,52 Q110,72 190,52" fill="none" stroke="#1f3526" stroke-width="1" opacity=".55"/>
+        <!-- 船篷 -->
+        <path d="M84,38 Q110,16 152,38 Z" fill="#e8efe6" opacity=".92"/>
+        <line x1="118" y1="20" x2="118" y2="40" stroke="#2f3d35" stroke-width="1.4"/>
+        <!-- 水痕 -->
+        <path d="M-10,82 Q40,76 110,82 T230,82" fill="none" stroke="rgba(248,250,247,.55)" stroke-width="1.2"/>
+      </svg>
+    </div>
+    <div class="ai-ink-modal" id="aiInkModal">
+      <img class="ai-ink-modal-img" id="aiInkModalImg" alt="">
+      <div class="ai-ink-modal-head">
+        <div class="ai-ink-modal-meta">
+          <div class="ai-ink-modal-num" id="aiInkModalNum">01</div>
+          <div class="ai-ink-modal-cat" id="aiInkModalCat">AI · 计算机视觉</div>
+        </div>
+        <h3 class="ai-ink-modal-title" id="aiInkModalTitle">TITLE</h3>
+        <div class="ai-ink-modal-desc" id="aiInkModalDesc"></div>
+      </div>
+      <div class="ai-ink-modal-cols">
+        <div class="ai-ink-modal-sec">
+          <div class="ai-ink-modal-sec-title">项目概述 · OVERVIEW</div>
+          <div class="ai-ink-modal-overview" id="aiInkModalOverview"></div>
+        </div>
+        <div class="ai-ink-modal-sec">
+          <div class="ai-ink-modal-sec-title">技术详解 · TECH STACK</div>
+          <div class="ai-ink-modal-techdetail" id="aiInkModalTechDetail"></div>
+        </div>
+      </div>
+      <div class="ai-ink-modal-foot">
+        <div class="ai-ink-modal-tech" id="aiInkModalTech"></div>
+        <div class="ai-ink-modal-nav">
+          <button class="ai-ink-prev" id="aiInkPrev" type="button">← 上一叶</button>
+          <button class="ai-ink-next" id="aiInkNext" type="button">下一叶 →</button>
+        </div>
+      </div>
+    </div>
+    <button class="ai-ink-back" id="aiInkBack" type="button" aria-label="轻舟返航，关闭详情">
+      <span class="ai-ink-back-boat">
+        <svg viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="32" cy="26" rx="22" ry="2" fill="rgba(31,74,55,.32)"/>
+          <path d="M6,19 Q32,29 58,19 L52,12 L12,12 Z" fill="#3a5848"/>
+          <path d="M22,12 Q32,4 44,12 Z" fill="#e8efe6" opacity=".92"/>
+          <line x1="34" y1="6" x2="34" y2="12" stroke="#2f3d35" stroke-width="1"/>
+        </svg>
+      </span>
+      <span>轻舟返航</span>
+    </button>
+    <div class="ai-ink-drop" id="aiInkDrop"></div>
+  </div>
+
+<script>
+(function(){
+  if (window.__aiInkScrollMounted) return;
+  window.__aiInkScrollMounted = true;
+
+  var stage   = document.getElementById('aiInkStage');
+  var drop    = document.getElementById('aiInkDrop');
+  var bg      = document.getElementById('aiInkBg');
+  var boat    = document.getElementById('aiInkBoat');
+  var modal   = document.getElementById('aiInkModal');
+  var btnBack = document.getElementById('aiInkBack');
+  var btnPrev = document.getElementById('aiInkPrev');
+  var btnNext = document.getElementById('aiInkNext');
+  var elNum   = document.getElementById('aiInkModalNum');
+  var elCat   = document.getElementById('aiInkModalCat');
+  var elTitle = document.getElementById('aiInkModalTitle');
+  var elImg   = document.getElementById('aiInkModalImg');
+  var elDesc  = document.getElementById('aiInkModalDesc');
+  var elTech  = document.getElementById('aiInkModalTech');
+  var elOverview = document.getElementById('aiInkModalOverview');
+  var elTechDetail = document.getElementById('aiInkModalTechDetail');
+
+  var AI_PROJECT_IMG = { '01':'AI1.webp', '02':'AI2.webp', '03':'AI3.webp' };
+  var currentNum = null;
+  var currentList = [];
+  var isOpening = false, isClosing = false;
+
+  // 内部使用：清掉所有阶段类 → 触发重排 → 重设
+  function resetStage(){
+    stage.classList.remove('phase-paper','phase-running','phase-out','is-open');
+    void stage.offsetWidth;
+  }
+  function setDropPos(x, y){
+    drop.style.left = x + 'px';
+    drop.style.top  = y + 'px';
+  }
+  // 强制重启动画：从 .ai-ink-X 里移除 -> reflow -> 加回来；
+  // 通过重新挂载 phase-running 来一次性重启所有 CSS animation
+  function restartAnimations(){
+    ['.ai-ink-drop','.ai-ink-clouds','.ai-ink-bg','.ai-ink-boat','.ai-ink-modal','.ai-ink-back']
+      .forEach(function(sel){
+        var n = stage.querySelector(sel);
+        if(!n) return;
+        var s = n.style.animation;
+        n.style.animation = 'none';
+        void n.offsetWidth;
+        n.style.animation = '';
+      });
+  }
+
+  function fillModal(num){
+    var data = (window.__aiProjects || []).find(function(p){ return p.num === num; });
+    if(!data) return;
+    elNum.textContent   = data.num;
+    elCat.textContent   = (data.cat || '').toUpperCase();
+    elTitle.textContent = data.title;
+    var imgFile = AI_PROJECT_IMG[num] || 'AI1.webp';
+    var imgSrc  = (typeof window.AI_IMG_DATA !== 'undefined' && window.AI_IMG_DATA[imgFile])
+                  ? window.AI_IMG_DATA[imgFile]
+                  : imgFile;
+    elImg.src = imgSrc;
+    elDesc.textContent = data.desc || '';
+    elOverview.textContent = data.overview || '';
+    elTechDetail.textContent = data.techDetail || '';
+    elTech.innerHTML = '';
+    (data.tech || []).forEach(function(t){
+      var s = document.createElement('span');
+      s.textContent = t;
+      elTech.appendChild(s);
+    });
+  }
+
+  function open(num, cx, cy){
+    if (isOpening) return;
+    isOpening = true;
+    currentNum = num;
+    currentList = (window.__aiProjects || []).slice();
+    fillModal(num);
+
+    resetStage();
+    restartAnimations();
+    setDropPos(cx, cy);
+    stage.classList.add('is-open','phase-paper');
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        stage.classList.remove('phase-paper');
+        stage.classList.add('phase-running');
+      });
+    });
+    document.body.style.overflow = 'hidden';
+    setTimeout(function(){ isOpening = false; }, 350);
+  }
+
+  function close(){
+    if (isClosing) return;
+    isClosing = true;
+    stage.classList.add('phase-out');
+    setTimeout(function(){
+      stage.classList.remove('is-open','phase-running','phase-out');
+      void stage.offsetWidth;
+      document.body.style.overflow = '';
+      currentNum = null;
+      isClosing = false;
+    }, 700);
+  }
+
+  function goto(num){
+    if(!currentList.length) return;
+    var idx = currentList.findIndex(function(p){ return p.num === num; });
+    if (idx < 0) idx = 0;
+    currentNum = currentList[idx].num;
+    fillModal(currentNum);
+  }
+  function gotoOffset(off){
+    if(!currentList.length) return;
+    var idx = currentList.findIndex(function(p){ return p.num === currentNum; });
+    if(idx < 0) idx = 0;
+    var nextIdx = (idx + off + currentList.length) % currentList.length;
+    goto(currentList[nextIdx].num);
+  }
+
+  btnBack.addEventListener('click', close);
+  btnPrev.addEventListener('click', function(){ gotoOffset(-1); });
+  btnNext.addEventListener('click', function(){ gotoOffset(1); });
+
+  document.addEventListener('keydown', function(e){
+    if (!stage.classList.contains('is-open')) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowLeft')  gotoOffset(-1);
+    else if (e.key === 'ArrowRight') gotoOffset(1);
+  });
+  // 点空白处也走"轻舟返航"，但点 modal 容器不关闭
+  stage.addEventListener('click', function(e){
+    if (e.target === stage) close();
+  });
+
+  // 暴露全局入口给卡片点击
+  window.playInkScroll = function(num, x, y){
+    if (typeof num !== 'string') num = String(num);
+    var data = (window.__aiProjects || []).find(function(p){ return p.num === num; });
+    if(!data) {
+      // 没数据则不阻拦原 ai-detail.html 跳转
+      window.location.href = 'ai-detail.html?id=' + num;
+      return;
+    }
+    var rect = document.body.getBoundingClientRect();
+    var cx = (typeof x === 'number' && x > 0) ? x : Math.max(80, rect.width/2);
+    var cy = (typeof y === 'number' && y > 0) ? y : Math.max(80, rect.height*0.45);
+    open(num, cx, cy);
+  };
+
+  // 提供紧急逃生通道
+  window.closeAiInk = close;
+})();
+</script>
+
 </body>
 </html>
