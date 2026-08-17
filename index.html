@@ -1078,10 +1078,63 @@
     .nl-btn:hover .nl-btn-back { transform: rotateX(0deg); }
     .nl-btn:active { transform: scale(0.97); }
 
+    /* ============ 留言弹幕（右侧循环飘动） ============ */
+    .nl-danmu {
+      position: relative;
+      flex: 1 1 260px;
+      min-width: 240px;
+      height: 200px;
+      overflow: hidden;
+      background: #fff;
+      border: 2px solid #1a1a1a;
+      border-radius: 4px;
+      box-shadow: 8px 8px 0 #000;
+    }
+    .nl-danmu::before {
+      content: '留言弹幕';
+      position: absolute;
+      top: 6px; left: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #1B4332;
+      opacity: 0.55;
+      z-index: 2;
+    }
+    .danmu-item {
+      position: absolute;
+      left: 0;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a1a;
+      padding: 2px 8px;
+      animation-name: danmu-move;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      will-change: transform;
+    }
+    @keyframes danmu-move {
+      from { transform: translateX(102%); }
+      to   { transform: translateX(-110%); }
+    }
+    .nl-danmu-empty {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      text-align: center;
+      font-size: 13px;
+      color: #9aa3a0;
+      letter-spacing: 1px;
+      pointer-events: none;
+    }
+
     /* 手机端：留言卡折到下方 */
     @media (max-width: 680px) {
       .nl-card { flex: 1 1 100%; min-width: unset; }
       .nl-page { padding: 22px 18px 20px; }
+      .nl-danmu { flex: 1 1 100%; min-width: unset; height: 160px; }
     }
 
     /* ============ AI 编程实战板块 ============ */
@@ -4033,6 +4086,10 @@
           <button class="nl-btn" type="button"><span class="nl-btn-face nl-btn-front">发送</span><span class="nl-btn-face nl-btn-back">收到</span></button>
         </div>
       </div>
+      <!-- 留言弹幕：循环飘动 -->
+      <div class="nl-danmu" id="nlDanmu">
+        <div class="nl-danmu-empty" id="nlDanmuEmpty">还没有留言，等你来发 →</div>
+      </div>
     </div>
   </section>
 
@@ -5845,5 +5902,38 @@ const card = document.createElement('div');
 })();
 </script>
 
+<script>
+  (function () {
+    var nlInput = document.querySelector('.nl-input');
+    var nlBtn = document.querySelector('.nl-btn');
+    var nlDanmu = document.getElementById('nlDanmu');
+    if (nlInput && nlBtn && nlDanmu) {
+      function addDanmu(text) {
+        var s = document.createElement('span');
+        s.className = 'danmu-item';
+        s.textContent = text;
+        s.style.top = (20 + Math.random() * 150) + 'px';
+        s.style.animationDuration = (9 + Math.random() * 5) + 's';
+        s.style.animationDelay = '0s';
+        nlDanmu.appendChild(s);
+        while (nlDanmu.querySelectorAll('.danmu-item').length > 30) {
+          nlDanmu.removeChild(nlDanmu.querySelector('.danmu-item'));
+        }
+      }
+      nlBtn.addEventListener('click', function () {
+        var v = (nlInput.value || '').trim();
+        if (v) {
+          addDanmu(v);
+          nlInput.value = '';
+          var emptyEl = document.getElementById('nlDanmuEmpty');
+          if (emptyEl) emptyEl.style.display = 'none';
+        }
+      });
+      nlInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') nlBtn.click();
+      });
+    }
+  })();
+</script>
 </body>
 </html>
