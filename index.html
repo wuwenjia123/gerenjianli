@@ -3790,6 +3790,20 @@
           </div>
           <div class="ai-card-date">GAME · CANVAS</div>
         </a>
+        <!-- 坦克大战卡片 -->
+        <a class="ai-card fx-card" href="https://wuwenjia123.github.io/tank-battle/" target="_blank" rel="noopener noreferrer">
+          <div class="ai-card-overlay"></div>
+          <div class="ai-popup-img has-image" style="background:#fafafa url('tank-battle.png') center/cover no-repeat;">
+            <span class="ai-popup-img-label">FX3 · 坦克大战</span>
+          </div>
+          <div class="ai-card-num">03</div>
+          <div class="ai-card-body">
+            <div class="ai-card-title">坦克大战 · Tank Battle</div>
+            <div class="ai-card-desc">经典坦克对战游戏：Pygame 单文件实现 / 碰撞检测 / 胜负判定 / WWJ 身份标识 / 纯 draw.rect 图元渲染</div>
+            <span class="ai-card-detail-link">开启交互 →</span>
+          </div>
+          <div class="ai-card-date">PYTHON · PYGAME</div>
+        </a>
       </div>
     </div>
   </section>
@@ -5088,6 +5102,58 @@ const card = document.createElement('div');
         vineFg.style.strokeDashoffset = vineLen;
       }
       let activeIdx = 0;
+
+      // ---------- 0. 自动缓慢横滚（跑马灯）+ 悬停 / 拖动暂停 ----------
+      const AUTO_SPEED = 0.5;          // 每帧像素，越小越慢（可微调）
+      let loopWidth = 0;               // 一组卡片的循环步长
+      let autoPaused = false;          // 悬停 / 拖动 / 滚轮 / 手动跳转时临时暂停
+      let resumeTimer = null;
+      let autoRAF = 0;
+
+      function measureLoop() {
+        // 克隆一份卡片追加到末尾，用于无缝循环
+        root.querySelectorAll('.entry-card-clone').forEach(n => n.remove());
+        const originals = root.querySelectorAll('.entry-card');
+        originals.forEach(c => {
+          const clone = c.cloneNode(true);
+          clone.classList.add('entry-card-clone');
+          clone.removeAttribute('id');
+          root.appendChild(clone);
+        });
+        const firstOrig = root.querySelector('.entry-card');
+        const firstClone = root.querySelector('.entry-card-clone');
+        loopWidth = (firstOrig && firstClone)
+          ? (firstClone.offsetLeft - firstOrig.offsetLeft)
+          : Math.max(1, root.scrollWidth - root.clientWidth);
+      }
+
+      function normalizeScrollLeft() {
+        // 把任意位置的 scrollLeft 映射回 [0, loopWidth) 可视等价区间（无缝）
+        if (loopWidth > 0) {
+          root.scrollLeft = ((root.scrollLeft % loopWidth) + loopWidth) % loopWidth;
+        }
+      }
+
+      function pauseAuto(ms) {
+        autoPaused = true;
+        if (resumeTimer) clearTimeout(resumeTimer);
+        if (ms && ms > 0) resumeTimer = setTimeout(() => { autoPaused = false; }, ms);
+      }
+      function resumeAuto() {
+        if (resumeTimer) clearTimeout(resumeTimer);
+        autoPaused = false;
+      }
+
+      function autoTick() {
+        if (!autoPaused && loopWidth > 0) {
+          let next = root.scrollLeft + AUTO_SPEED;
+          if (next >= loopWidth) next -= loopWidth;   // 无缝回卷
+          root.scrollLeft = next;
+          updateByScroll();
+        }
+        autoRAF = window.requestAnimationFrame(autoTick);
+      }
+
       function setActive(i) {
         if (i < 0) i = 0;
         if (i > cards.length - 1) i = cards.length - 1;
@@ -5108,13 +5174,14 @@ const card = document.createElement('div');
         raf = window.requestAnimationFrame(() => {
           raf = 0;
           if (root.scrollWidth <= root.clientWidth + 1) { setActive(0); return; }
-          const pct = root.scrollLeft / Math.max(1, root.scrollWidth - root.clientWidth);
+          const denom = loopWidth > 0 ? Math.max(1, loopWidth - root.clientWidth) : Math.max(1, root.scrollWidth - root.clientWidth);
+          const pct = root.scrollLeft / denom;
           const i = Math.max(0, Math.min(cards.length - 1, Math.round(pct * (cards.length - 1))));
           setActive(i);
         });
       }
       root.addEventListener('scroll', updateByScroll, { passive: true });
-      dots.forEach((d, idx) => d.addEventListener('click', () => scrollToIndex(idx, true)));
+      dots.forEach((d, idx) => d.addEventListener('click', () => { scrollToIndex(idx, true); pauseAuto(3000); }));
 
       // 计算第 i 张卡片应滚到的精确 scrollLeft（居中）
       function targetLeft(i) {
@@ -5133,8 +5200,8 @@ const card = document.createElement('div');
         root.scrollTo({ left: target, behavior: smooth ? 'smooth' : 'auto' });
         setActive(i);
       }
-      if (btnPrev) btnPrev.addEventListener('click', () => scrollToIndex(activeIdx - 1, true));
-      if (btnNext) btnNext.addEventListener('click', () => scrollToIndex(activeIdx + 1, true));
+      if (btnPrev) btnPrev.addEventListener('click', () => { scrollToIndex(activeIdx - 1, true); pauseAuto(3000); });
+      if (btnNext) btnNext.addEventListener('click', () => { scrollToIndex(activeIdx + 1, true); pauseAuto(3000); });
 
             // ---------- 2. 鼠标拖动（mousedown/move/up）：不干扰 <a> 的原生 click 跳转 ----------
       const drag = {
@@ -5149,6 +5216,7 @@ const card = document.createElement('div');
         if (e.button !== 0) return;
         if (e.target.closest('button, .entry-nav, .entry-scroll-dot')) return;
         drag.active = true;
+        pauseAuto();                // 拖动时暂停自动滚动
         drag.startX = e.clientX;
         drag.startScrollLeft = root.scrollLeft;
         drag.moved = false;
@@ -5174,26 +5242,14 @@ const card = document.createElement('div');
             e.stopPropagation();
             root.removeEventListener('click', blockClickOnce, true);
           }, true);
-          snapToNearest();
-        } else {
-          updateByScroll();
+          normalizeScrollLeft();   // 停在当前位置，不吸附跳变
         }
+        resumeAuto();
+        updateByScroll();
       });
 
-      // // 松手后平滑吸附到距离视口中心最近的卡片
-      function snapToNearest() {
-        if (root.scrollWidth <= root.clientWidth + 1) { updateByScroll(); return; }
-        const rRect = root.getBoundingClientRect();
-        const viewCenter = rRect.left + rRect.width / 2;
-        let best = 0, bestDist = Infinity;
-        cards.forEach((c, idx) => {
-          const cRect = c.getBoundingClientRect();
-          const cCenter = cRect.left + cRect.width / 2;
-          const dist = Math.abs(cCenter - viewCenter);
-          if (dist < bestDist) { bestDist = dist; best = idx; }
-        });
-        scrollToIndex(best, true);
-      }
+      // 已移除「松手吸附」：改为停在当前位置（见 mouseup 分支 normalizeScrollLeft）
+
 
       // ---------- 3. 鼠标滚轮 → 横滑（rAF 累积平滑，不再卡顿） ----------
       let wheelAccum = 0;
@@ -5203,6 +5259,7 @@ const card = document.createElement('div');
         const delta = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) || 0;
         if (delta === 0) return;
         e.preventDefault();
+        pauseAuto(1500);            // 手动滚轮时暂停自动滚动
         wheelAccum += delta * 1.6;
         if (wheelRaf) return;
         wheelRaf = window.requestAnimationFrame(function consumeWheel() {
@@ -5214,8 +5271,8 @@ const card = document.createElement('div');
           if (Math.abs(wheelAccum) > 0.5) {
             wheelRaf = window.requestAnimationFrame(consumeWheel);
           } else {
-            // 滚轮惯性结束，自动吸附到最近卡片
-            window.requestAnimationFrame(() => snapToNearest());
+            // 滚轮结束：暂停自动滚动一小会儿，避免与手动滚动打架，随后自动恢复
+            pauseAuto(1500);
           }
         });
       }, { passive: false });
@@ -5229,12 +5286,21 @@ const card = document.createElement('div');
           updateByScroll();
         }
       }
+      // 悬停 / 触摸时暂停（方便阅读或点击）；拖动 / 滚轮已在各自逻辑里暂停
+      root.addEventListener('mouseenter', () => { pauseAuto(); });
+      root.addEventListener('mouseleave', () => { resumeAuto(); });
+      root.addEventListener('touchstart', () => { pauseAuto(); }, { passive: true });
+      root.addEventListener('touchend', () => { resumeAuto(); });
+
       window.addEventListener('load', () => {
-        window.requestAnimationFrame(correctSnap);
+        measureLoop();
+        normalizeScrollLeft();
+        correctSnap();
+        if (!autoRAF) autoTick();    // 启动自动缓慢横滚
       });
       window.addEventListener('resize', () => {
         let t; clearTimeout(t);
-        t = setTimeout(correctSnap, 120);
+        t = setTimeout(() => { measureLoop(); correctSnap(); }, 120);
       });
 
       setActive(0);
