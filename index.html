@@ -1033,6 +1033,43 @@
       border-color: #1B4332;
       box-shadow: 0 0 0 3px rgba(27,67,50,0.12);
     }
+
+    /* 昵称输入框：比留言框稍窄的一行，风格保持一致 */
+    .nl-input-name {
+      margin-bottom: 10px;
+      font-size: 13px;
+      padding: 8px 12px;
+      background: #f4f6f4;
+    }
+    /* 发送状态提示 */
+    .nl-status {
+      margin-top: 12px;
+      min-height: 18px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      font-weight: 600;
+      color: #1B4332;
+      opacity: 0;
+      transform: translateY(-3px);
+      transition: opacity .28s ease, transform .28s ease;
+      text-align: left;
+    }
+    .nl-status.show { opacity: 1; transform: translateY(0); }
+    .nl-status.ok    { color: #1B7F4B; }
+    .nl-status.error { color: #B3261E; }
+    .nl-status.sending { color: #6b6b6b; }
+    /* 发送中：按钮降低可点性 + 光标等待 */
+    .nl-btn.is-loading { pointer-events: none; }
+    .nl-btn.is-loading .nl-btn-face { opacity: .72; }
+    /* honeypot：真人看不见，只用来骗机器人 */
+    .nl-hp {
+      position: absolute !important;
+      left: -9999px !important;
+      width: 1px !important;
+      height: 1px !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
     .nl-btn {
       position: relative;
       display: inline-block;
@@ -2580,6 +2617,97 @@
       .ppt-stack-btn { transition: none !important; }
     }
 
+    /* PPT 舞台：手机端允许纵向滚动，仅劫持横滑 */
+    .ppt-stage { touch-action: pan-y; }
+
+    /* ============ PPT 全屏查看器（手机电脑端通用） ============ */
+    .ppt-lightbox {
+      position: fixed; inset: 0;
+      background: rgba(7,21,43,.94);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 16px; box-sizing: border-box;
+    }
+    .ppt-lightbox.open { display: flex; }
+    .ppt-lb-bar {
+      position: absolute; top: 0; left: 0; right: 0;
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; color: #E8EEF9;
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      z-index: 2;
+    }
+    .ppt-lb-bar .ppt-lb-title {
+      flex: 1; min-width: 0;
+      font-size: 14px; font-weight: 600;
+      text-align: center;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .ppt-lb-page {
+      font-family: 'Consolas','Courier New',monospace;
+      font-size: 12px; color: #9DB2D6;
+      background: rgba(46,124,246,.18);
+      border: 1px solid rgba(46,124,246,.4);
+      padding: 3px 9px; border-radius: 999px;
+    }
+    .ppt-lb-link {
+      color: #9DB2D6; text-decoration: none;
+      font-size: 12px; padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(157,178,214,.25);
+      transition: .2s; white-space: nowrap;
+    }
+    .ppt-lb-link:hover {
+      color: #E8EEF9;
+      border-color: rgba(46,124,246,.55);
+      background: rgba(46,124,246,.12);
+    }
+    .ppt-lb-close {
+      background: rgba(255,255,255,.06);
+      color: #E8EEF9;
+      border: 1px solid rgba(255,255,255,.12);
+      width: 34px; height: 34px; border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; line-height: 1;
+    }
+    .ppt-lb-close:hover { background: rgba(255,255,255,.12); }
+    .ppt-lb-stage {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      width: 100%; min-height: 0;
+      touch-action: pinch-zoom;
+    }
+    .ppt-lb-stage img {
+      max-width: 100%; max-height: 100%;
+      width: auto; height: auto; object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.55);
+      background: #0B1E3A;
+    }
+    .ppt-lb-nav {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(46,124,246,.18);
+      border: 1px solid rgba(46,124,246,.45);
+      color: #E8EEF9;
+      width: 44px; height: 44px; border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; line-height: 1; z-index: 2;
+      backdrop-filter: blur(4px);
+    }
+    .ppt-lb-nav:hover { background: rgba(46,124,246,.32); }
+    .ppt-lb-nav:disabled { opacity: .35; cursor: not-allowed; }
+    .ppt-lb-nav.prev { left: 14px; }
+    .ppt-lb-nav.next { right: 14px; }
+
+    @media (max-width: 767.98px) {
+      .ppt-lb-bar { padding: 8px 10px; gap: 6px; }
+      .ppt-lb-bar .ppt-lb-title { font-size: 13px; }
+      .ppt-lb-bar .ppt-lb-link { font-size: 11px; padding: 5px 8px; }
+      .ppt-lb-nav { width: 40px; height: 40px; font-size: 20px; }
+    }
+
     /* ============ 页脚 ============ */
     .footer {
       margin-top: 2rem;
@@ -4041,6 +4169,22 @@
     </div>
   </section>
 
+  <!-- PPT 全屏查看器（手机电脑端通用，直接呈现幻灯片） -->
+  <div class="ppt-lightbox" id="pptLightbox" aria-hidden="true" role="dialog">
+    <div class="ppt-lb-bar">
+      <button class="ppt-lb-close" id="pptLbClose" aria-label="关闭">×</button>
+      <div class="ppt-lb-page" id="pptLbPage">01 / 15</div>
+      <div class="ppt-lb-title" id="pptLbTitle">智足科技 · 数据赋能鞋业</div>
+      <a class="ppt-lb-link" id="pptLbPdf" target="_blank" rel="noopener">查看 PDF</a>
+      <a class="ppt-lb-link" id="pptLbPptx" target="_blank" rel="noopener" download>下载 PPTX</a>
+    </div>
+    <div class="ppt-lb-stage">
+      <img id="pptLbImg" alt="">
+    </div>
+    <button class="ppt-lb-nav prev" id="pptLbPrev" aria-label="上一张">‹</button>
+    <button class="ppt-lb-nav next" id="pptLbNext" aria-label="下一张">›</button>
+  </div>
+
   <!-- 项目经历 Tabs -->
   <section class="section reveal reveal-delay-8">
     <div class="section-title">EXPERIENCE</div>
@@ -4077,13 +4221,17 @@
         <div class="edu-info">本科 · 2026.09 – 2030.06 (预计)</div>
         <div class="edu-desc">📚 小学教育方向 · 准大一即获阿里云6项认证</div>
       </div>
-      <!-- 书页风格留言卡片 -->
+      <!-- 书页风格留言卡片（内容会同步发送到站长邮箱） -->
       <div class="nl-card">
         <div class="nl-page">
           <div class="nl-title">Get Ready</div>
           <div class="nl-sub">你有什么想法</div>
-          <input class="nl-input" type="text" placeholder="your thoughts" maxlength="200">
-          <button class="nl-btn" type="button"><span class="nl-btn-face nl-btn-front">发送</span><span class="nl-btn-face nl-btn-back">收到</span></button>
+          <input class="nl-input nl-input-name" id="nlName" type="text" placeholder="your name（可留空）" maxlength="20" autocomplete="name">
+          <input class="nl-input" id="nlMsg" type="text" placeholder="your thoughts" maxlength="200">
+          <!-- honeypot：反垃圾，真人看不到也填不到 -->
+          <input class="nl-hp" id="nlBotcheck" type="text" name="botcheck" tabindex="-1" autocomplete="off">
+          <button class="nl-btn" id="nlBtn" type="button"><span class="nl-btn-face nl-btn-front">发送</span><span class="nl-btn-face nl-btn-back">收到</span></button>
+          <div class="nl-status" id="nlStatus" role="status" aria-live="polite"></div>
         </div>
       </div>
       <!-- 留言弹幕：循环飘动 -->
@@ -4966,7 +5114,6 @@
         techDetail: '· 视觉层全部以 SVG + CSS 关键帧实现，墨滴晕染、山水画卷过渡、模糊到清晰渐变均不依赖任何图片资源，保证可移植。\n· 交互由原生 JavaScript 事件驱动，配合 IntersectionObserver 做入场触发，移动端用媒体查询收起非必要动效。\n· 交付为纯静态站点，源码托管于 GitHub，经 CloudStudio 一键静态发布，本地 / 仓库 / 云端三端同步。',
         date: '2026.3',
         featured: false,
-        image: 'AI1.png',
         imageWebp: 'AI1.webp'
       },
       {
@@ -4978,7 +5125,6 @@
         techDetail: '· 调度层用定时任务（cron / 云函数）每日触发，抓取阶段对接公开 RSS 与开放 API。\n· 内容处理由大语言模型完成：先去重与相关性过滤，再按固定模板生成「要点 + 摘要 + 来源」的日报。\n· 推送层通过 Webhook / 邮件 / IM 机器人输出，支持失败重试与空内容静默，只在真正有料时才打扰。',
         date: '2026.6',
         featured: true,
-        image: 'AI2.png',
         imageWebp: 'AI2.webp'
       },
       {
@@ -4990,7 +5136,6 @@
         techDetail: '· 角色层用固定 System Prompt 锁定人设与边界，避免每次对话风格漂移。\n· 记忆层定期把对话中沉淀的偏好与约定写入长期记忆，下次直接调用，减少重复交代。\n· 执行层通过工具 / 函数调用串联检索、文件与通知，把「问一句做一步」升级为「给目标，它跟进」。',
         date: '2025.12',
         featured: false,
-        image: 'AI3.png',
         imageWebp: 'AI3.webp'
       }
     ];
@@ -5146,13 +5291,29 @@ const card = document.createElement('div');
       const stage     = document.getElementById('pptStage');
       if (!stack || !btnPrev || !btnNext) return;
 
-      const PDF = '智足科技数据赋能鞋业.pdf';
-      // 每张卡片显示 PDF 对应页的真实截图（已预渲染为 ppt-page-01.webp ~ ppt-page-15.webp）
-      const PAGES = Array.from({ length: 15 }, (_, i) => ({
-        page:   i + 1,
-        title:  '智足科技数据赋能鞋业',
-        sub:    `SLIDE ${String(i + 1).padStart(2, '0')} / 15`,
-        image:  `ppt-page-${String(i + 1).padStart(2, '0')}.webp`,
+      const PDF  = '智足科技数据赋能鞋业.pdf';
+      const PPTX = '智足科技-竞赛优化版.pptx';
+      // 每张卡片显示对应页的真实内容，标题来自新版幻灯片
+      const PAGES = [
+        { page:  1, title: '智足科技 · 数据赋能鞋业' },
+        { page:  2, title: '目录：四步论证' },
+        { page:  3, title: '第一章 · 行业困局与转型刚需' },
+        { page:  4, title: '产销剪刀差：危机凸显' },
+        { page:  5, title: '五层分销 vs 两层直达' },
+        { page:  6, title: '第二章 · 智足模式数据驱动升级' },
+        { page:  7, title: 'B2C 数据链路：从捕捉到闭环' },
+        { page:  8, title: '小单快反：五维度量化收益' },
+        { page:  9, title: '第三章 · 核心壁垒独家数据优势' },
+        { page: 10, title: '独家数据源：难以复制的护城河' },
+        { page: 11, title: '三维竞品对比：全方位领先' },
+        { page: 12, title: '第四章 · 实证复盘标杆案例价值' },
+        { page: 13, title: '关键指标改造对比：6 个月的改变' },
+        { page: 14, title: '新质生产力的生动样本' },
+        { page: 15, title: '致谢与展望' },
+      ].map(p => ({
+        ...p,
+        sub:  `SLIDE ${String(p.page).padStart(2, '0')} / 15`,
+        image:`ppt-page-${String(p.page).padStart(2, '0')}.webp`,
       }));
       const TOTAL = PAGES.length;
       let current = 0; // 0-based
@@ -5168,11 +5329,8 @@ const card = document.createElement('div');
           <img class="ppt-cover-img" src="${item.image}" alt="${item.title} 第${item.page}页" loading="lazy">
           <span class="ppt-page-tag">P${pad2(item.page)}</span>
         `;
-        // 点击中间卡片 → 新标签页打开对应 PDF 页面
-        card.addEventListener('click', () => {
-          if (i !== current) { goTo(i); return; }
-          window.open(`${PDF}#page=${item.page}&toolbar=1&navpanes=0&view=FitH`, '_blank', 'noopener');
-        });
+        // 点击任意卡片 → 在站内全屏查看（手机电脑端通用）；直接呈现幻灯片原貌
+        card.addEventListener('click', () => openLightbox(i));
         stack.appendChild(card);
       });
       const cards = Array.from(stack.querySelectorAll('.ppt-stack-card'));
@@ -5276,6 +5434,88 @@ const card = document.createElement('div');
         }, { passive: false });
       }
 
+      // ============ PPT 全屏查看器（lightbox） ============
+      const lb        = document.getElementById('pptLightbox');
+      const lbImg     = document.getElementById('pptLbImg');
+      const lbTitle   = document.getElementById('pptLbTitle');
+      const lbPage    = document.getElementById('pptLbPage');
+      const lbPrev    = document.getElementById('pptLbPrev');
+      const lbNext    = document.getElementById('pptLbNext');
+      const lbClose   = document.getElementById('pptLbClose');
+      const lbPdf     = document.getElementById('pptLbPdf');
+      const lbPptx    = document.getElementById('pptLbPptx');
+      let lbIndex     = 0;
+
+      function renderLightbox() {
+        const p = PAGES[lbIndex];
+        if (!p) return;
+        lbImg.src = p.image;
+        lbImg.alt = p.title + ' · 第 ' + p.page + ' 页';
+        lbTitle.textContent = p.title;
+        lbPage.textContent  = String(p.page).padStart(2, '0') + ' / ' + String(TOTAL).padStart(2, '0');
+        lbPdf.href  = `${PDF}#page=${p.page}&toolbar=1&navpanes=0&view=FitH`;
+        lbPptx.href = PPTX;
+        lbPrev.disabled = lbIndex <= 0;
+        lbNext.disabled = lbIndex >= TOTAL - 1;
+      }
+      function openLightbox(i) {
+        lbIndex = Math.max(0, Math.min(TOTAL - 1, i | 0));
+        renderLightbox();
+        if (lb) {
+          lb.classList.add('open');
+          lb.setAttribute('aria-hidden', 'false');
+          document.body.style.overflow = 'hidden';
+        }
+      }
+      function closeLightbox() {
+        if (!lb) return;
+        lb.classList.remove('open');
+        lb.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+      function lbStep(delta) {
+        const n = lbIndex + delta;
+        if (n < 0 || n > TOTAL - 1) return;
+        lbIndex = n;
+        renderLightbox();
+      }
+      if (lb) {
+        lbPrev.addEventListener('click', () => lbStep(-1));
+        lbNext.addEventListener('click', () => lbStep(1));
+        lbClose.addEventListener('click', closeLightbox);
+        lb.addEventListener('click', (e) => { if (e.target === lb) closeLightbox(); });
+      }
+
+      // Lightbox 内键盘控制（仅在打开时）
+      window.addEventListener('keydown', (e) => {
+        if (!lb || !lb.classList.contains('open')) return;
+        if (e.key === 'Escape')      { e.preventDefault(); closeLightbox(); }
+        else if (e.key === 'ArrowLeft')  { e.preventDefault(); lbStep(-1); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); lbStep(1); }
+      });
+
+      // Lightbox 触屏横滑（手机端友好；touch-action: pinch-zoom 已允许双指缩放）
+      let lbTouchStartX = 0, lbTouchDX = 0, lbTouchMoved = false;
+      if (lb) {
+        lb.addEventListener('touchstart', (e) => {
+          if (e.touches.length !== 1) return;
+          lbTouchStartX = e.touches[0].clientX;
+          lbTouchDX = 0; lbTouchMoved = false;
+        }, { passive: true });
+        lb.addEventListener('touchmove', (e) => {
+          if (e.touches.length !== 1) return;
+          lbTouchDX = e.touches[0].clientX - lbTouchStartX;
+          if (Math.abs(lbTouchDX) > 6) lbTouchMoved = true;
+        }, { passive: true });
+        lb.addEventListener('touchend', () => {
+          if (lbTouchMoved && Math.abs(lbTouchDX) > 48) {
+            if (lbTouchDX < 0) lbStep(1);
+            else               lbStep(-1);
+          }
+          lbTouchDX = 0;
+        });
+      }
+
       applyClasses();
     })();
 
@@ -5298,7 +5538,7 @@ const card = document.createElement('div');
       let activeIdx = 0;
 
       // ---------- 0. 自动缓慢横滚（跑马灯）+ 悬停 / 拖动暂停 ----------
-      const AUTO_SPEED = 0.5;          // 每帧像素，越小越慢（可微调）
+      const AUTO_SPEED = 1.0;          // 每帧像素，越小越慢（可微调）
       let loopWidth = 0;               // 一组卡片的循环步长
       let autoPaused = false;          // 悬停 / 拖动 / 滚轮 / 手动跳转时临时暂停
       let resumeTimer = null;
@@ -5499,6 +5739,11 @@ const card = document.createElement('div');
 
       setActive(0);
       correctSnap();
+
+      // 立即启动（DOM 已解析），不完全依赖 load 事件；图片加载完后再校正一次
+      measureLoop();
+      normalizeScrollLeft();
+      if (!autoRAF) autoTick();
     })();
   })();
 
@@ -5903,34 +6148,165 @@ const card = document.createElement('div');
 </script>
 
 <script>
+  /* ================== 留言板：弹幕 + 同步发送到站长邮箱（Web3Forms） ==================
+   * 配置说明：把 NL_ACCESS_KEY 换成你自己的 Web3Forms Access Key 即可。
+   * 获取方式（约 1 分钟，免密码注册）：
+   *   1. 打开 https://web3forms.com ，在首页输入框填你的邮箱，点 "Create Your Form"
+   *   2. 去邮箱查收，里面会给你一串 36 位的 Access Key（形如 a1b2c3d4-e5f6-...）
+   *   3. 把它粘到下面的引号里，保存文件并重新部署
+   * 免费额度 250 条/月。这个 Key 本身就是设计成放在前端的，公开无风险。
+   * ============================================================================ */
+  var NL_ACCESS_KEY = 'c3e46cf0-fd16-47c3-8de8-04405a242735';
+  var NL_ENDPOINT   = 'https://api.web3forms.com/submit';
+  var NL_COOLDOWN   = 15000; // 同一浏览器 15 秒内只能发一条，防止被刷
+
   (function () {
-    var nlInput = document.querySelector('.nl-input');
-    var nlBtn = document.querySelector('.nl-btn');
-    var nlDanmu = document.getElementById('nlDanmu');
-    if (nlInput && nlBtn && nlDanmu) {
-      function addDanmu(text) {
-        var s = document.createElement('span');
-        s.className = 'danmu-item';
-        s.textContent = text;
-        s.style.top = (20 + Math.random() * 150) + 'px';
-        s.style.animationDuration = (9 + Math.random() * 5) + 's';
-        s.style.animationDelay = '0s';
-        nlDanmu.appendChild(s);
-        while (nlDanmu.querySelectorAll('.danmu-item').length > 30) {
-          nlDanmu.removeChild(nlDanmu.querySelector('.danmu-item'));
-        }
+    var nlName    = document.getElementById('nlName');
+    var nlMsg     = document.getElementById('nlMsg');
+    var nlBotcheck= document.getElementById('nlBotcheck');
+    var nlBtn     = document.getElementById('nlBtn');
+    var nlStatus  = document.getElementById('nlStatus');
+    var nlDanmu   = document.getElementById('nlDanmu');
+    var nlFront   = nlBtn ? nlBtn.querySelector('.nl-btn-front') : null;
+    if (!nlMsg || !nlBtn || !nlDanmu) return;
+
+    var sending   = false;
+    var lastSent  = 0;
+
+    function addDanmu(text) {
+      var s = document.createElement('span');
+      s.className = 'danmu-item';
+      s.textContent = text;
+      s.style.top = (20 + Math.random() * 150) + 'px';
+      s.style.animationDuration = (9 + Math.random() * 5) + 's';
+      s.style.animationDelay = '0s';
+      nlDanmu.appendChild(s);
+      while (nlDanmu.querySelectorAll('.danmu-item').length > 30) {
+        nlDanmu.removeChild(nlDanmu.querySelector('.danmu-item'));
       }
-      nlBtn.addEventListener('click', function () {
-        var v = (nlInput.value || '').trim();
-        if (v) {
-          addDanmu(v);
-          nlInput.value = '';
-          var emptyEl = document.getElementById('nlDanmuEmpty');
-          if (emptyEl) emptyEl.style.display = 'none';
-        }
-      });
-      nlInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') nlBtn.click();
+      var emptyEl = document.getElementById('nlDanmuEmpty');
+      if (emptyEl) emptyEl.style.display = 'none';
+    }
+
+    function setStatus(msg, type) {
+      if (!nlStatus) return;
+      nlStatus.textContent = msg || '';
+      nlStatus.className = 'nl-status' + (msg ? (' show ' + (type || '')) : '');
+    }
+
+    function setSending(on) {
+      sending = on;
+      if (!nlBtn) return;
+      nlBtn.classList.toggle('is-loading', on);
+      if (nlFront) nlFront.textContent = on ? '发送中' : '发送';
+    }
+
+    function getVisitorMeta() {
+      // 附带一点上下文，方便你知道留言来自哪个页面
+      return {
+        page: location.href,
+        ua: navigator.userAgent,
+        time: new Date().toLocaleString('zh-CN', { hour12: false })
+      };
+    }
+
+    function submitMessage(name, msg) {
+      // honeypot 被填了 = 机器人，静默丢弃不打扰真人
+      if (nlBotcheck && nlBotcheck.value) return;
+
+      var now = Date.now();
+      if (now - lastSent < NL_COOLDOWN) {
+        var wait = Math.ceil((NL_COOLDOWN - (now - lastSent)) / 1000);
+        setStatus('发送太快啦，请 ' + wait + ' 秒后再试 ～', 'error');
+        return;
+      }
+
+      if (!NL_ACCESS_KEY || NL_ACCESS_KEY === 'YOUR_ACCESS_KEY_HERE') {
+        console.warn('[留言板] 未配置 Web3Forms Access Key，邮件不会发出。请在 index.html 搜索 NL_ACCESS_KEY 并填入你的 key。');
+        // 没配 key 时不阻塞访客体验：仍然上弹幕，但明确告知未送达
+        addDanmu((name ? name + '：' : '') + msg);
+        nlMsg.value = '';
+        setStatus('留言已上墙（站长尚未配置邮箱转发）', 'error');
+        lastSent = now;
+        return;
+      }
+
+      setSending(true);
+      setStatus('正在送到站长邮箱…', 'sending');
+
+      var meta = getVisitorMeta();
+      var payload = {
+        access_key: NL_ACCESS_KEY,
+        subject: '【个人主页】收到一条新留言' + (name ? ' · 来自 ' + name : ''),
+        from_name: '文嘉的主页留言板',
+        name: name || '匿名访客',
+        message: msg,
+        page: meta.page,
+        time: meta.time,
+        botcheck: (nlBotcheck && nlBotcheck.value) ? nlBotcheck.value : ''
+      };
+
+      // 超时保护：12 秒还没结果就按失败处理，不让按钮一直卡住
+      var timer = setTimeout(function () {
+        if (!sending) return;
+        setSending(false);
+        setStatus('网络似乎有点慢，请稍后再试一下 ～', 'error');
+      }, 12000);
+
+      fetch(NL_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, data: j }; }); })
+        .then(function (res) {
+          clearTimeout(timer);
+          setSending(false);
+          if (res.ok && res.data && res.data.success) {
+            lastSent = Date.now();
+            addDanmu((name ? name + '：' : '') + msg);
+            nlMsg.value = '';
+            setStatus('留言已送达站长邮箱 ✓ 感谢你的留言！', 'ok');
+            setTimeout(function () { setStatus(''); }, 6000);
+          } else {
+            var why = (res.data && (res.data.message || (res.data.error && res.data.error.message))) || '';
+            // 常见错误码翻译成人话，方便站长（你）一眼定位问题
+            var hint = '';
+            if (res.status === 400) {
+              hint = /domain/i.test(why)
+                ? '（当前部署域名未被 Web3Forms 授权，需换自定义域名或升级套餐）'
+                : '（多为当月 250 条免费额度用尽或参数有误）';
+            } else if (res.status === 403) {
+              hint = '（被判定为非浏览器调用，或来源域名受限）';
+            } else if (res.status === 429) {
+              hint = '（触发限流，约 1 小时后自动恢复）';
+            }
+            setStatus('发送失败：' + (why || '服务端返回异常') + hint, 'error');
+          }
+        })
+        .catch(function (err) {
+          clearTimeout(timer);
+          setSending(false);
+          console.warn('[留言板] 发送失败：', err);
+          setStatus('发送失败，请检查网络后再试一次 ～', 'error');
+        });
+    }
+
+    nlBtn.addEventListener('click', function () {
+      if (sending) return;
+      var v = (nlMsg.value || '').trim();
+      if (!v) { setStatus('先写点什么再发送吧 ～', 'error'); nlMsg.focus(); return; }
+      if (v.length < 2) { setStatus('再多写两个字吧 ～', 'error'); nlMsg.focus(); return; }
+      var n = nlName ? (nlName.value || '').trim() : '';
+      submitMessage(n, v);
+    });
+
+    nlMsg.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') nlBtn.click();
+    });
+    if (nlName) {
+      nlName.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') nlMsg.focus();
       });
     }
   })();

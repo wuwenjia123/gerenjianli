@@ -10,3 +10,8 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
+# 本地备份（PPT 改版前的源文件 / 清理前的旧附件），不进仓库
+_backup_ppt_source/
+_cleanup_backup/
+__probe_tmp.html
+
