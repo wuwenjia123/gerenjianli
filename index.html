@@ -1987,6 +1987,16 @@
     }
     .entry-card--tech-fe .entry-card-bg { filter: hue-rotate(275deg) saturate(1.18) contrast(1.1) brightness(0.92); }
 
+    /* 04 · 数据可视化（图志本体是暖米白底，需比另三张压得更暗，白字才压得住） */
+    .entry-card--tech-viz .entry-card-overlay {
+      background:
+        radial-gradient(130% 90% at 82% 22%, rgba(232,57,26,0.30) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.86) 100%),
+        linear-gradient(180deg, rgba(7,9,15,0.34) 0%, rgba(7,9,15,0.24) 30%, rgba(7,9,15,0.64) 100%);
+    }
+    .entry-card--tech-viz .entry-card-bg { filter: saturate(1.06) contrast(1.06) brightness(0.62); }
+    /* 显式覆盖通用 hover 提亮，避免亮底图把白字吃掉（同优先级，靠后生效） */
+    .entry-card--tech-viz:hover .entry-card-bg { filter: saturate(1.14) contrast(1.08) brightness(0.72); }
+
     /* 左右箭头（桌面端辅助） */
     .entry-nav {
       position: absolute;
@@ -3814,6 +3824,173 @@
 }
 /* AI 项目卡里不要冒红框，命中 ck skip */
 
+    /* ==================================================================
+       数据可视化 · 全球人口图志
+       图片来自独立可视化项目（暖色杂志风：米白 #FAF3E7 / 朱红 / 墨黑），
+       与本站墨绿主调刻意区分——作为「项目成果」原样呈现，不强行改色。
+       ================================================================== */
+    .viz-lead {
+      max-width: 64ch;
+      margin: 0.1rem 0 1.5rem;
+      font-size: 1rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+    }
+    .viz-lead b { color: var(--text-primary); font-weight: 700; }
+
+    /* 关键数字 · 四宫格 */
+    .viz-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 1.1rem;
+    }
+    .viz-kpi {
+      position: relative;
+      overflow: hidden;
+      background: #FFFFFF;
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-lg);
+      padding: 1rem 1.05rem 0.95rem 1.15rem;
+      box-shadow: var(--shadow-soft);
+    }
+    .viz-kpi::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--grad-accent);
+    }
+    .viz-kpi-tag {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.16em;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+    .viz-kpi-num {
+      font-family: var(--font-tech);
+      font-size: clamp(1.45rem, 3.2vw, 1.95rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--accent-primary);
+    }
+    .viz-kpi-num small {
+      font-size: 0.52em;
+      font-weight: 800;
+      margin-left: 2px;
+      letter-spacing: 0;
+    }
+    .viz-kpi-label {
+      margin-top: 0.45rem;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+
+    /* 图集 */
+    .viz-gallery {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      background: #FFFFFF;
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-2xl);
+      padding: 1.15rem;
+      box-shadow: var(--shadow-card);
+    }
+    .viz-shot {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--border-mid);
+      border-radius: var(--r-md);
+      background: #FAF3E7;
+      transition: transform var(--dur-base) var(--ease-out-expo),
+                  box-shadow var(--dur-base) var(--ease-out-expo);
+    }
+    .viz-shot:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lift);
+    }
+    .viz-shot--wide { grid-column: 1 / -1; }
+    .viz-shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .viz-shot figcaption {
+      display: flex;
+      align-items: baseline;
+      gap: 0.55rem;
+      padding: 0.6rem 0.85rem 0.65rem;
+      background: #FFFFFF;
+      border-top: 1px solid var(--border-soft);
+      font-size: 0.78rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+    .viz-shot-idx {
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+    }
+
+    /* 跳转按钮区 */
+    .viz-cta {
+      margin-top: 1.35rem;
+      text-align: center;
+    }
+    .viz-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 1.9rem;
+      border-radius: 999px;
+      background: var(--grad-accent);
+      color: #FFFFFF;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 16px 32px -16px rgba(47,107,79,0.5);
+      transition: transform var(--dur-base) var(--ease-out-expo),
+                  box-shadow var(--dur-base) var(--ease-out-expo);
+    }
+    .viz-cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 24px 44px -20px rgba(47,107,79,0.6);
+    }
+    .viz-cta-btn-arrow {
+      font-size: 1.05em;
+      line-height: 1;
+      transition: transform var(--dur-base) var(--ease-out-expo);
+    }
+    .viz-cta-btn:hover .viz-cta-btn-arrow { transform: translate(2px, -2px); }
+    .viz-cta-note {
+      margin-top: 0.75rem;
+      font-size: 0.76rem;
+      line-height: 1.7;
+      color: var(--text-tertiary);
+    }
+
+    @media (max-width: 899.98px) {
+      .viz-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .viz-gallery { grid-template-columns: 1fr; gap: 0.8rem; padding: 0.85rem; }
+      .viz-shot--wide { grid-column: auto; }
+      .viz-shot figcaption { font-size: 0.74rem; }
+      .viz-cta-btn { width: 100%; justify-content: center; padding: 0.8rem 1.2rem; font-size: 0.9rem; }
+    }
 </style>
 <noscript><style>.reveal{opacity:1!important;transform:none!important;animation:none!important}</style></noscript>
 </head>
@@ -3976,6 +4153,25 @@
           进入互动体验 <span class="entry-card-arrow" aria-hidden="true">→</span>
         </div>
       </a>
+
+      <!-- 04 · 数据可视化（用图志封面本地出图，不依赖外部图片接口） -->
+      <a class="entry-card entry-card--tech-viz" href="#vizSection" data-target="#vizSection">
+        <div class="entry-card-bg" style="background-image:url('viz-00-cover.webp');"></div>
+        <div class="entry-card-grid"></div>
+        <div class="entry-card-mask"></div>
+        <div class="entry-card-overlay"></div>
+        <div class="entry-card-top">
+          <span class="entry-card-idx-square"></span>
+          <span class="entry-card-idx">04</span>
+          <span class="entry-card-cat">/ 数据可视化</span>
+        </div>
+        <div class="entry-card-title">
+          <span>全球人口<br/>图志</span>
+        </div>
+        <div class="entry-card-cta">
+          打开数据图志 <span class="entry-card-arrow" aria-hidden="true">→</span>
+        </div>
+      </a>
     </div>
 
     <!-- 左右箭头（桌面端辅助切屏） -->
@@ -3984,8 +4180,8 @@
     <!-- 底部进度指示 · 绿色藤蔓（进度生长）+ 三朵等距小雏菊 -->
     <div class="entry-scroll-indicator" id="entryScrollIndicator" aria-hidden="true">
       <svg class="entry-vine" viewBox="0 0 200 48" preserveAspectRatio="xMidYMid meet">
-        <path id="vinePathBg" class="vine-stem vine-stem-bg" d="M25 30 C 50 14, 75 46, 100 30 C 125 46, 150 14, 175 30"/>
-        <path id="vinePathFg" class="vine-stem vine-stem-fg" d="M25 30 C 50 14, 75 46, 100 30 C 125 46, 150 14, 175 30"/>
+        <path id="vinePathBg" class="vine-stem vine-stem-bg" d="M25 30 C 42 14, 58 46, 75 30 C 92 46, 108 14, 125 30 C 142 14, 158 46, 175 30"/>
+        <path id="vinePathFg" class="vine-stem vine-stem-fg" d="M25 30 C 42 14, 58 46, 75 30 C 92 46, 108 14, 125 30 C 142 14, 158 46, 175 30"/>
         <g class="entry-scroll-dot is-active" data-idx="0" transform="translate(25,30)">
           <circle class="vine-hit" r="15"/>
           <g class="daisy">
@@ -4002,7 +4198,7 @@
             <circle class="daisy-core" cx="0" cy="0" r="3.1"/>
           </g>
         </g>
-        <g class="entry-scroll-dot" data-idx="1" transform="translate(100,30)">
+        <g class="entry-scroll-dot" data-idx="1" transform="translate(75,30)">
           <circle class="vine-hit" r="15"/>
           <g class="daisy">
             <g class="daisy-petals">
@@ -4018,7 +4214,23 @@
             <circle class="daisy-core" cx="0" cy="0" r="3.1"/>
           </g>
         </g>
-        <g class="entry-scroll-dot" data-idx="2" transform="translate(175,30)">
+        <g class="entry-scroll-dot" data-idx="2" transform="translate(125,30)">
+          <circle class="vine-hit" r="15"/>
+          <g class="daisy">
+            <g class="daisy-petals">
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(45)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(90)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(135)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(180)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(225)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(270)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(315)"/>
+            </g>
+            <circle class="daisy-core" cx="0" cy="0" r="3.1"/>
+          </g>
+        </g>
+        <g class="entry-scroll-dot" data-idx="3" transform="translate(175,30)">
           <circle class="vine-hit" r="15"/>
           <g class="daisy">
             <g class="daisy-petals">
@@ -4184,6 +4396,112 @@
     <button class="ppt-lb-nav prev" id="pptLbPrev" aria-label="上一张">‹</button>
     <button class="ppt-lb-nav next" id="pptLbNext" aria-label="下一张">›</button>
   </div>
+
+  <!-- 数据可视化 · 全球人口结构与趋势图志（成果图集 + 跳转独立项目） -->
+  <section class="section reveal reveal-delay-8" id="vizSection">
+    <div class="ai-practice-header">
+      <div class="ppt-header-tag">
+        <span class="ppt-header-square"></span>
+        <span class="ppt-header-tag-text">DATA VIZ // 数据可视化</span>
+      </div>
+      <div class="ai-practice-title">
+        全球人口结构与趋势图志<span class="ai-practice-title-dot">。</span>
+      </div>
+    </div>
+
+    <p class="viz-lead">
+      把联合国《世界人口展望》的官方数据，铺成一本可滚动的数据图志：<b>从 82 亿到 103 亿的最后一程</b>。
+      人类第一次在自己的曲线上望见了尽头——本页是它的精华切片，完整交互版含 8 个章节与逐图数据解读。
+    </p>
+
+    <!-- 关键数字 -->
+    <div class="viz-kpis">
+      <div class="viz-kpi">
+        <div class="viz-kpi-tag">POPULATION · 2024</div>
+        <div class="viz-kpi-num">82<small>亿</small></div>
+        <div class="viz-kpi-label">2024 年世界人口总量</div>
+      </div>
+      <div class="viz-kpi">
+        <div class="viz-kpi-tag">PEAK · 约 2084</div>
+        <div class="viz-kpi-num">103<small>亿</small></div>
+        <div class="viz-kpi-label">预计历史峰值，此后缓降</div>
+      </div>
+      <div class="viz-kpi">
+        <div class="viz-kpi-tag">FERTILITY · 2024</div>
+        <div class="viz-kpi-num">2.25</div>
+        <div class="viz-kpi-label">全球总和生育率，更替水平为 2.1</div>
+      </div>
+      <div class="viz-kpi">
+        <div class="viz-kpi-tag">LIFE EXPECTANCY</div>
+        <div class="viz-kpi-num">73.3<small>岁</small></div>
+        <div class="viz-kpi-label">全球出生时预期寿命（1990 年为 64.0）</div>
+      </div>
+    </div>
+
+    <!-- 图集：封面通栏，其余双列 -->
+    <div class="viz-gallery">
+      <figure class="viz-shot viz-shot--wide">
+        <img src="viz-00-cover.webp" width="1200" height="583" loading="lazy" decoding="async"
+             alt="全球人口图志封面：从 82 亿到 103 亿的最后一程">
+        <figcaption><span class="viz-shot-idx">00</span>封面 · 从 82 亿到 103 亿的最后一程</figcaption>
+      </figure>
+
+      <figure class="viz-shot">
+        <img src="viz-01-five-numbers.webp" width="1200" height="364" loading="lazy" decoding="async"
+             alt="五个数字，读懂今天的人类">
+        <figcaption><span class="viz-shot-idx">01</span>五个数字，读懂今天的人类</figcaption>
+      </figure>
+
+      <figure class="viz-shot">
+        <img src="viz-02-curve.webp" width="1200" height="826" loading="lazy" decoding="async"
+             alt="人口曲线，第一次望见尽头">
+        <figcaption><span class="viz-shot-idx">02</span>人口曲线，第一次望见尽头</figcaption>
+      </figure>
+
+      <figure class="viz-shot">
+        <img src="viz-03-fertility.webp" width="1200" height="583" loading="lazy" decoding="async"
+             alt="生育率下行，与逼近的老龄化交叉点">
+        <figcaption><span class="viz-shot-idx">03</span>生育率下行，与逼近的老龄化交叉点</figcaption>
+      </figure>
+
+      <figure class="viz-shot">
+        <img src="viz-04-dividend.webp" width="1200" height="443" loading="lazy" decoding="async"
+             alt="红利窗口，正在不同地区错位开合">
+        <figcaption><span class="viz-shot-idx">04</span>红利窗口，正在不同地区错位开合</figcaption>
+      </figure>
+
+      <figure class="viz-shot">
+        <img src="viz-05-india-china.webp" width="1200" height="826" loading="lazy" decoding="async"
+             alt="印度超越中国，第一人口大国换座">
+        <figcaption><span class="viz-shot-idx">05</span>印度超越中国，第一人口大国换座</figcaption>
+      </figure>
+
+      <figure class="viz-shot">
+        <img src="viz-06-six-fates.webp" width="1200" height="738" loading="lazy" decoding="async"
+             alt="一个峰值，六种命运">
+        <figcaption><span class="viz-shot-idx">06</span>一个峰值，六种命运</figcaption>
+      </figure>
+
+      <figure class="viz-shot">
+        <img src="viz-07-action.webp" width="1200" height="328" loading="lazy" decoding="async"
+             alt="从数据到行动">
+        <figcaption><span class="viz-shot-idx">07</span>从数据到行动</figcaption>
+      </figure>
+    </div>
+
+    <!-- 跳转完整项目 -->
+    <div class="viz-cta">
+      <a class="viz-cta-btn" href="https://wuwenjia123.github.io/global-population/"
+         target="_blank" rel="noopener noreferrer">
+        打开完整交互图志
+        <span class="viz-cta-btn-arrow" aria-hidden="true">↗</span>
+      </a>
+      <div class="viz-cta-note">
+        数据来源：联合国经济和社会事务部人口司《World Population Prospects 2024》中位情景<br>
+        单文件 HTML · 原生 SVG 绘图 · 零外部依赖，可离线打开
+      </div>
+    </div>
+  </section>
 
   <!-- 项目经历 Tabs -->
   <section class="section reveal reveal-delay-8">
