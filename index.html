@@ -4012,6 +4012,108 @@
       .viz-shot figcaption { font-size: 0.74rem; }
       .viz-cta-btn { width: 100%; justify-content: center; padding: 0.8rem 1.2rem; font-size: 0.9rem; }
     }
+
+    /* ============ 应用开发 · 小树洞心情日历 ============ */
+    .appdev-lead {
+      margin: 0.4rem 0 1.5rem;
+      max-width: 760px;
+      font-size: 0.98rem;
+      line-height: 1.85;
+      color: var(--text-secondary);
+    }
+    .appdev-lead b { color: var(--accent-primary); font-weight: 700; }
+
+    .appdev-features {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 0.4rem;
+    }
+    .appdev-feature {
+      position: relative;
+      overflow: hidden;
+      background: #FFFFFF;
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-lg);
+      padding: 1.05rem 1.1rem 1rem 1.2rem;
+      box-shadow: var(--shadow-soft);
+    }
+    .appdev-feature::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--grad-accent);
+    }
+    .appdev-feature-tag {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.16em;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      margin-bottom: 0.45rem;
+    }
+    .appdev-feature-title {
+      font-family: var(--font-tech);
+      font-size: 1.18rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: var(--accent-primary);
+      margin-bottom: 0.4rem;
+    }
+    .appdev-feature-desc {
+      font-size: 0.84rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .appdev-cta {
+      margin-top: 1.5rem;
+      text-align: center;
+    }
+    .appdev-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 1.9rem;
+      border-radius: 999px;
+      background: var(--grad-accent);
+      color: #FFFFFF;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 16px 32px -16px rgba(47,107,79,0.5);
+      transition: transform var(--dur-base) var(--ease-out-expo),
+                  box-shadow var(--dur-base) var(--ease-out-expo);
+    }
+    .appdev-cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 24px 44px -20px rgba(47,107,79,0.6);
+    }
+    .appdev-cta-btn-arrow {
+      font-size: 1.05em;
+      line-height: 1;
+      transition: transform var(--dur-base) var(--ease-out-expo);
+    }
+    .appdev-cta-btn:hover .appdev-cta-btn-arrow { transform: translate(2px, -2px); }
+    .appdev-cta-note {
+      margin-top: 0.75rem;
+      font-size: 0.76rem;
+      line-height: 1.7;
+      color: var(--text-tertiary);
+    }
+
+    @media (max-width: 899.98px) {
+      .appdev-features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .appdev-features { grid-template-columns: 1fr; gap: 0.8rem; }
+      .appdev-cta-btn { width: 100%; justify-content: center; padding: 0.8rem 1.2rem; font-size: 0.9rem; }
+    }
 </style>
 <noscript><style>.reveal{opacity:1!important;transform:none!important;animation:none!important}</style></noscript>
 </head>
@@ -4193,6 +4295,23 @@
           打开数据图志 <span class="entry-card-arrow" aria-hidden="true">→</span>
         </div>
       </a>
+      <a class="entry-card entry-card--tech-app" href="#appDevSection" data-target="#appDevSection">
+        <div class="entry-card-bg" style="background-image:linear-gradient(135deg,#2F6B4F 0%,#3E8C66 48%,#5E9B74 100%);"></div>
+        <div class="entry-card-grid"></div>
+        <div class="entry-card-mask"></div>
+        <div class="entry-card-overlay"></div>
+        <div class="entry-card-top">
+          <span class="entry-card-idx-square"></span>
+          <span class="entry-card-idx">05</span>
+          <span class="entry-card-cat">/ 应用开发</span>
+        </div>
+        <div class="entry-card-title">
+          <span>小树洞<br/>心情日历</span>
+        </div>
+        <div class="entry-card-cta">
+          打开心情日历 <span class="entry-card-arrow" aria-hidden="true">→</span>
+        </div>
+      </a>
     </div>
 
     <!-- 左右箭头（桌面端辅助切屏） -->
@@ -4200,9 +4319,9 @@
     <button class="entry-nav entry-nav-next" id="entryNavNext" aria-label="下一屏">›</button>
     <!-- 底部进度指示 · 绿色藤蔓（进度生长）+ 三朵等距小雏菊 -->
     <div class="entry-scroll-indicator" id="entryScrollIndicator" aria-hidden="true">
-      <svg class="entry-vine" viewBox="0 0 200 48" preserveAspectRatio="xMidYMid meet">
+      <svg class="entry-vine" viewBox="0 0 250 48" preserveAspectRatio="xMidYMid meet">
         <path id="vinePathBg" class="vine-stem vine-stem-bg" d="M25 30 C 42 14, 58 46, 75 30 C 92 46, 108 14, 125 30 C 142 14, 158 46, 175 30"/>
-        <path id="vinePathFg" class="vine-stem vine-stem-fg" d="M25 30 C 42 14, 58 46, 75 30 C 92 46, 108 14, 125 30 C 142 14, 158 46, 175 30"/>
+        <path id="vinePathFg" class="vine-stem vine-stem-fg" d="M25 30 C 42 14, 58 46, 75 30 C 92 46, 108 14, 125 30 C 142 14, 158 46, 175 30 C 192 14, 208 46, 225 30"/>
         <g class="entry-scroll-dot is-active" data-idx="0" transform="translate(25,30)">
           <circle class="vine-hit" r="15"/>
           <g class="daisy">
@@ -4252,6 +4371,22 @@
           </g>
         </g>
         <g class="entry-scroll-dot" data-idx="3" transform="translate(175,30)">
+          <circle class="vine-hit" r="15"/>
+          <g class="daisy">
+            <g class="daisy-petals">
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(45)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(90)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(135)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(180)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(225)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(270)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(315)"/>
+            </g>
+            <circle class="daisy-core" cx="0" cy="0" r="3.1"/>
+          </g>
+        </g>
+        <g class="entry-scroll-dot" data-idx="4" transform="translate(225,30)">
           <circle class="vine-hit" r="15"/>
           <g class="daisy">
             <g class="daisy-petals">
@@ -4479,6 +4614,56 @@
       <div class="viz-cta-note">
         数据来源：联合国经济和社会事务部人口司《World Population Prospects 2024》中位情景<br>
         单文件 HTML · 原生 SVG 绘图 · 零外部依赖，可离线打开
+      </div>
+    </div>
+  </section>
+
+  <!-- 应用开发 · 小树洞心情日历（外链在线应用） -->
+  <section class="section reveal" id="appDevSection">
+    <div class="ai-practice-header">
+      <div class="ppt-header-tag">
+        <span class="ppt-header-square"></span>
+        <span class="ppt-header-tag-text">APP DEV // 应用开发</span>
+      </div>
+      <div class="ai-practice-title">
+        小树洞心情日历<span class="ai-practice-title-dot">。</span>
+      </div>
+    </div>
+
+    <p class="appdev-lead">
+      一个把心事轻轻埋进树洞的心情应用：<b>每天写下一句心情，长成属于你的心情日历</b>。
+      不评判、不喧哗，只把那些说不出口的话，交给一棵会静静倾听的小树。
+    </p>
+
+    <!-- 功能展示 -->
+    <div class="appdev-features">
+      <div class="appdev-feature">
+        <div class="appdev-feature-tag">MOOD · 心情日记</div>
+        <div class="appdev-feature-title">每日心情</div>
+        <div class="appdev-feature-desc">每天一句话，记录此刻的情绪温度，轻量不负担。</div>
+      </div>
+      <div class="appdev-feature">
+        <div class="appdev-feature-tag">HOLLOW · 树洞倾诉</div>
+        <div class="appdev-feature-title">心事树洞</div>
+        <div class="appdev-feature-desc">把说不出口的话埋进树洞，私密安全，只属于你自己。</div>
+      </div>
+      <div class="appdev-feature">
+        <div class="appdev-feature-tag">CALENDAR · 心情日历</div>
+        <div class="appdev-feature-title">心情日历</div>
+        <div class="appdev-feature-desc">日积月累，在一张日历上看见自己情绪的季节流转。</div>
+      </div>
+    </div>
+
+    <!-- 跳转在线应用 -->
+    <div class="appdev-cta">
+      <a class="appdev-cta-btn" href="https://little-tree-hollow.app.workbuddy.host/"
+         target="_blank" rel="noopener noreferrer">
+        打开小树洞心情日历
+        <span class="appdev-cta-btn-arrow" aria-hidden="true">↗</span>
+      </a>
+      <div class="appdev-cta-note">
+        在线应用 · 打开即可使用，无需下载安装<br>
+        你的心事只属于你——写下的内容安静留存，陪伴每一个情绪起伏的日子
       </div>
     </div>
   </section>
