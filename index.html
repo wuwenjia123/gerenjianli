@@ -556,6 +556,25 @@
     .contact-value a { color: #1F2E26; text-decoration: none; transition: color var(--dur-base) var(--ease-out-expo); }
     .contact-value a:hover { color: var(--accent-primary); }
 
+    /* 点击查看：默认隐藏真实联系方式，防爬虫抓取与骚扰 */
+    .contact-reveal {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--accent-primary);
+      background: none;
+      border: none;
+      border-bottom: 1px dashed var(--accent-primary);
+      padding: 0 2px 1px;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: color var(--dur-base) var(--ease-out-expo), border-color var(--dur-base) var(--ease-out-expo);
+    }
+    .contact-reveal:hover { color: var(--accent-green); border-bottom-color: var(--accent-green); }
+    .contact-reveal:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; border-radius: 3px; }
+    .contact-revealed { color: #1F2E26; text-decoration: none; }
+    .contact-revealed:hover { color: var(--accent-primary); }
+
     /* ============ Section 通用样式 ============ */
     .section { margin-bottom: 3.2rem; scroll-margin-top: 72px; }
     @media (max-width: 767.98px) { .section { margin-bottom: 2.5rem; scroll-margin-top: 62px; } }
@@ -2949,6 +2968,8 @@
       .contact-card {
         -webkit-print-color-adjust: exact;
       }
+      .contact-reveal { font-size: 0; border: none; padding: 0; }
+      .contact-reveal::after { content: "（见线上主页）"; font-size: 0.95rem; color: #1F2E26; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -4064,18 +4085,18 @@
 
   <!-- 联系方式卡片 -->
   <div class="contact-card">
-    <div class="contact-item">
-      <span class="contact-label">手机号</span>
-      <span class="contact-value">18857322605</span>
-    </div>
-    <div class="contact-item">
-      <span class="contact-label">GitHub</span>
-      <span class="contact-value"><a href="https://github.com/wuwenjia123" target="_blank">wuwenjia123</a></span>
-    </div>
-    <div class="contact-item">
-      <span class="contact-label">邮箱</span>
-      <span class="contact-value"><a href="mailto:wuwenjia12@qq.com" id="emailLink">wuwenjia12@qq.com</a></span>
-    </div>
+      <div class="contact-item">
+        <span class="contact-label">手机号</span>
+        <span class="contact-value"><button class="contact-reveal" type="button" data-reveal="phone" aria-label="点击查看手机号">点击查看</button></span>
+      </div>
+      <div class="contact-item">
+        <span class="contact-label">GitHub</span>
+        <span class="contact-value"><a href="https://github.com/wuwenjia123" target="_blank" rel="noopener noreferrer">wuwenjia123</a></span>
+      </div>
+      <div class="contact-item">
+        <span class="contact-label">邮箱</span>
+        <span class="contact-value"><button class="contact-reveal" type="button" data-reveal="email" aria-label="点击查看邮箱">点击查看</button></span>
+      </div>
     <div class="contact-item">
       <span class="contact-label">所在地</span>
       <span class="contact-value">浙江杭州</span>
@@ -4296,7 +4317,7 @@
           <div class="ai-card-date">CANVAS · WEBGL</div>
         </a>
         <!-- 飞机大战卡片 -->
-        <a class="ai-card fx-card" href="https://feijigogogo.netlify.app" target="_blank" rel="noopener noreferrer">
+        <a class="ai-card fx-card" href="https://wuwenjia123.github.io/feijigogogogo/" target="_blank" rel="noopener noreferrer">
           <div class="ai-card-overlay"></div>
           <div class="ai-popup-img has-image" style="background:#fafafa url('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E7%BB%8F%E5%85%B8%E9%A3%9E%E6%9C%BA%E5%A4%A7%E6%88%98%E6%B8%B8%E6%88%8F%E5%85%A8%E5%B1%8F%E6%88%AA%E5%9B%BE%EF%BC%8C%E7%8E%A9%E5%AE%B6%E6%88%98%E6%9C%BA%E5%9C%A8%E4%B8%8B%E6%96%B9%E5%8F%91%E5%B0%84%E5%AD%90%E5%BC%B9%EF%BC%8C%E5%A4%9A%E6%9E%B6%E6%95%8C%E6%9C%BA%E4%BB%8E%E4%B8%8A%E6%96%B9%E8%A2%AD%E6%9D%A5%EF%BC%8C%E7%88%86%E7%82%B8%E7%B2%92%E5%AD%90%E7%89%B9%E6%95%88%EF%BC%8C%E5%B7%A6%E4%B8%8A%E8%A7%92%E6%98%BE%E7%A4%BA%E5%88%86%E6%95%B0%E5%92%8C%E7%94%9F%E5%91%BD%E5%80%BC%EF%BC%8C%E6%BB%9A%E5%8A%A8%E6%98%9F%E7%A9%BA%E8%83%8C%E6%99%AF%EF%BC%8C%E8%89%B2%E5%BD%A9%E9%B2%9C%E8%89%B3%E7%9A%84%E5%8D%A1%E9%80%9A%E9%A3%8E%E6%A0%BC%E8%A1%97%E6%9C%BA%E6%B8%B8%E6%88%8F%E7%94%BB%E9%9D%A2&image_size=landscape_4_3') center/cover no-repeat;">
             <span class="ai-popup-img-label">FX2 · 飞机大战</span>
@@ -5102,8 +5123,6 @@
     // 简历数据定义
     const resume = {
       name: "吴文嘉",
-      email: "wuwenjia12@qq.com",
-      phone: "18857322605",
       github: "wuwenjia123",
       location: "浙江杭州",
       badges: ["阿里云高级AI训练师", "智能体工程师", "A+编程认证", "大模型Clouder×4", "AIGC实践者"],
@@ -5362,23 +5381,46 @@
       skillsGrid.appendChild(card);
     });
 
-    // 邮箱点击复制提示
-    const emailLink = document.getElementById('emailLink');
-    emailLink.addEventListener('click', async (e) => {
-      e.preventDefault();
-      try {
-        await navigator.clipboard.writeText(resume.email);
-        const original = emailLink.textContent;
-        emailLink.textContent = '✅ 已复制';
-        emailLink.style.color = 'var(--accent-green)';
-        setTimeout(() => {
-          emailLink.textContent = original;
-          emailLink.style.color = '';
-        }, 1800);
-      } catch {
-        window.location.href = 'mailto:' + resume.email;
-      }
-    });
+    // 联系方式：点击查看（默认不暴露真实邮箱/手机号，防爬虫抓取与骚扰）
+    (function () {
+      // 真实信息以 base64 存放，源码与静态 HTML 中均不出现明文邮箱/手机号
+      const CONTACT_SECRET = {
+        email: "d3V3ZW5qaWExMkBxcS5jb20=",
+        phone: "MTg4NTczMjI2MDU="
+      };
+      const decode = (b) => { try { return atob(b); } catch { return ""; } };
+      document.querySelectorAll('.contact-reveal').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-reveal');
+          const val = decode(CONTACT_SECRET[key] || "");
+          if (!val) return;
+          const wrap = btn.parentNode;
+          if (key === 'email') {
+            const a = document.createElement('a');
+            a.href = 'mailto:' + val;
+            a.textContent = val;
+            a.className = 'contact-revealed';
+            a.addEventListener('click', async (e) => {
+              e.preventDefault();
+              try {
+                await navigator.clipboard.writeText(val);
+                const original = a.textContent;
+                a.textContent = '✅ 已复制';
+                a.style.color = 'var(--accent-green)';
+                setTimeout(() => { a.textContent = original; a.style.color = ''; }, 1800);
+              } catch { window.location.href = 'mailto:' + val; }
+            });
+            wrap.replaceChild(a, btn);
+          } else if (key === 'phone') {
+            const a = document.createElement('a');
+            a.href = 'tel:' + val;
+            a.textContent = val;
+            a.className = 'contact-revealed';
+            wrap.replaceChild(a, btn);
+          }
+        });
+      });
+    })();
 
     // ============ AI 编程实战板块渲染 & 特效 ============
     const aiProjects = [
