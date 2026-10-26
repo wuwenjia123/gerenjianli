@@ -2346,7 +2346,7 @@
         0 12px 32px -14px rgba(0,0,0,0.55),
         inset 0 1px 0 rgba(255,255,255,0.10);
       border: 1px solid rgba(41,230,255,0.14);
-      background: #fff;
+      background: #F5EFE2;
       transform-origin: 50% 50%;
       transition:
         transform var(--dur-mid) var(--ease-out-expo),
@@ -2410,8 +2410,8 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      object-fit: contain;
-      background: #fff;
+      object-fit: cover;
+      background: #F5EFE2;
       display: block;
     }
     /* 页码角标：左上角半透明小标签，不遮挡 PPT 内容 */
@@ -2712,7 +2712,7 @@
       width: auto; height: auto; object-fit: contain;
       border-radius: 8px;
       box-shadow: 0 20px 60px rgba(0,0,0,.55);
-      background: #0B1E3A;
+      background: #F5EFE2;
     }
     .ppt-lb-nav {
       position: absolute; top: 50%; transform: translateY(-50%);
@@ -4398,7 +4398,7 @@
         <div class="ppt-progress-count">
           <span id="pptIdxNow">01</span>
           <span class="ppt-progress-slash">/</span>
-          <span id="pptIdxTotal">15</span>
+          <span id="pptIdxTotal">10</span>
         </div>
       </div>
     </div>
@@ -4408,8 +4408,8 @@
   <div class="ppt-lightbox" id="pptLightbox" aria-hidden="true" role="dialog">
     <div class="ppt-lb-bar">
       <button class="ppt-lb-close" id="pptLbClose" aria-label="关闭">×</button>
-      <div class="ppt-lb-page" id="pptLbPage">01 / 15</div>
-      <div class="ppt-lb-title" id="pptLbTitle">智足科技 · 数据赋能鞋业</div>
+      <div class="ppt-lb-page" id="pptLbPage">01 / 10</div>
+      <div class="ppt-lb-title" id="pptLbTitle">封面 · 鼓动算法</div>
       <a class="ppt-lb-link" id="pptLbPdf" target="_blank" rel="noopener">查看 PDF</a>
       <a class="ppt-lb-link" id="pptLbPptx" target="_blank" rel="noopener" download>下载 PPTX</a>
     </div>
@@ -5612,29 +5612,24 @@ const card = document.createElement('div');
       const stage     = document.getElementById('pptStage');
       if (!stack || !btnPrev || !btnNext) return;
 
-      const PDF  = '智足科技数据赋能鞋业.pdf';
-      const PPTX = '智足科技-竞赛优化版.pptx';
-      // 每张卡片显示对应页的真实内容，标题来自新版幻灯片
+      const PDF  = '竞赛ppt鼓动.pdf';
+      const PPTX = '竞赛ppt鼓动.pptx';
+      // 每张卡片显示对应页的真实内容（由 竞赛ppt鼓动.pptx 逐页导出 1280×720）
       const PAGES = [
-        { page:  1, title: '智足科技 · 数据赋能鞋业' },
-        { page:  2, title: '目录：四步论证' },
-        { page:  3, title: '第一章 · 行业困局与转型刚需' },
-        { page:  4, title: '产销剪刀差：危机凸显' },
-        { page:  5, title: '五层分销 vs 两层直达' },
-        { page:  6, title: '第二章 · 智足模式数据驱动升级' },
-        { page:  7, title: 'B2C 数据链路：从捕捉到闭环' },
-        { page:  8, title: '小单快反：五维度量化收益' },
-        { page:  9, title: '第三章 · 核心壁垒独家数据优势' },
-        { page: 10, title: '独家数据源：难以复制的护城河' },
-        { page: 11, title: '三维竞品对比：全方位领先' },
-        { page: 12, title: '第四章 · 实证复盘标杆案例价值' },
-        { page: 13, title: '关键指标改造对比：6 个月的改变' },
-        { page: 14, title: '新质生产力的生动样本' },
-        { page: 15, title: '致谢与展望' },
+        { page:  1, title: '封面 · 鼓动算法' },
+        { page:  2, title: '项目定位 · 四大特征' },
+        { page:  3, title: '痛点分析 · 算法过程不可见' },
+        { page:  4, title: '设计理念 · 亲手制造数据' },
+        { page:  5, title: '核心路径 · 五步探究' },
+        { page:  6, title: '核心环节 · 01–04' },
+        { page:  7, title: '核心环节 · 05–08' },
+        { page:  8, title: '设计逻辑 · 四条准则' },
+        { page:  9, title: '核心价值 · 四重价值' },
+        { page: 10, title: '致谢 · 智启未来' },
       ].map(p => ({
         ...p,
-        sub:  `SLIDE ${String(p.page).padStart(2, '0')} / 15`,
-        image:`ppt-page-${String(p.page).padStart(2, '0')}.webp`,
+        sub:  `SLIDE ${String(p.page).padStart(2, '0')} / 10`,
+        image:`ppt-donggu-page-${String(p.page).padStart(2, '0')}.webp`,
       }));
       const TOTAL = PAGES.length;
       let current = 0; // 0-based
