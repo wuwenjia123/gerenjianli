@@ -536,6 +536,156 @@
         const videoElement = document.getElementById('input-video');   // 提升到外层作用域
         const previewCanvas = document.getElementById('webcam-preview'); // 提升到外层作用域
         let hands = null;    // MediaPipe Hands 实例，稍后初始化
+
+        // ==========================================
+        // 【send 串行调度器 2026-11-11】
+        // 根因（已用 CDP 实测复现）：MediaPipe 的 WASM 只允许单帧送进。
+        // 一旦两个 hands.send() 同时在飞，第二个会触发
+        //   `Aborted(native code called abort())`，并且**实例从此永久损坏**
+        //   —— 之后每一次 send 都立刻 Abort，永远不会再有 onResults，也就永远没有绿色骨架。
+        // 旧代码的漏洞：用 Promise.race(超时 5s) 后 finally 就把 sendInFlight 置回 false，
+        // 但被 race 甩在后面的那个 hands.send() **仍在 WASM 里跑**；下一帧立刻又发一个
+        // → 重叠 → Abort → 实例坏掉。症状正是用户截图里的 "Send: 0 | OnResults: 0"，
+        // 而且 stall 计数只停在个位数（因为后续是 Abort 不是 timeout，计数不再增长）。
+        //
+        // 现在的规则：
+        //   ① 全局只有一个 send 在飞（mpSendBusy），后排队的请求直接丢弃（新帧本来就更新）
+        //   ② 超时只告警，**绝不**提前释放 busy 标记（必须等真正的 settle）
+        //   ③ 连续多次超时 → 判定实例损坏 → 销毁并重建 hands（mpRebuildHands）
+        // ==========================================
+        const MP_SEND_TIMEOUT_MS = 4000;      // 单帧超时（仅告警，不释放 busy）
+        const MP_SEND_HARD_RESET_MS = 15000;  // 单帧超过这个时长 → 判定实例损坏
+        let mpSendBusy = false;               // 全局是否有一帧在飞
+        let mpSendSeq = 0;                    // 已发起的 send 序号（用于丢弃过期结果）
+        let mpSendStall = 0;                  // 连续超时次数
+        let mpInstanceGeneration = 0;         // 实例代数（重建 +1，用于识别过期回调）
+        let mpRebuilding = false;
+
+        // 提交一帧给 MediaPipe。返回 Promise，settle 后才释放 busy。
+        // 调用方不要 await（每次 onFrame 只试一次），由内部保证不重叠。
+        function mpSendFrame(video) {
+            if (!hands || mpSendBusy || mpRebuilding) return Promise.resolve(false);
+            const myGen = mpInstanceGeneration;
+            ++mpSendSeq;
+            mpSendBusy = true;
+
+            let settleGuard = null;
+
+            return new Promise((resolve) => {
+                let done = false;
+                // 注意：这里只 resolve、永不 reject —— 调用方（onFrame）不 await，
+                // reject 会变成 unhandled rejection。失败信息全部写进 debugState。
+                const finish = (ok) => {
+                    if (done) return;
+                    done = true;
+                    if (settleGuard) clearTimeout(settleGuard);
+                    // 只有代数没变才释放 busy（重建期间 busy 由重建流程接管）
+                    if (myGen === mpInstanceGeneration) mpSendBusy = false;
+                    resolve(ok);
+                };
+
+                // 告警定时器：只提示，不释放 busy
+                const warnTimer = setTimeout(() => {
+                    if (done) return;
+                    mpSendStall++;
+                    debugState.lastError = 'MP-SEND: 单帧超过 ' + (MP_SEND_TIMEOUT_MS / 1000) +
+                        's 未返回（已排队等待，累计 ' + mpSendStall + ' 次）';
+                }, MP_SEND_TIMEOUT_MS);
+
+                // 硬复位定时器：超过 15s 还没 settle → 实例被视为损坏
+                settleGuard = setTimeout(() => {
+                    if (done) return;
+                    clearTimeout(warnTimer);
+                    mpSendStall++;
+                    debugState.lastError = 'MP-SEND: 单帧超过 ' + (MP_SEND_HARD_RESET_MS / 1000) +
+                        's 未返回，判定 MediaPipe 实例已损坏，正在重建…';
+                    mpSendBusy = false;
+                    done = true;
+                    resolve(false);
+                    try { mpRebuildHands('send 长时间未返回'); } catch (_) {}
+                }, MP_SEND_HARD_RESET_MS);
+
+                let p;
+                try {
+                    p = hands.send({ image: video });
+                } catch (e) {
+                    clearTimeout(warnTimer);
+                    finish(false, e && e.message);
+                    return;
+                }
+                Promise.resolve(p).then(() => {
+                    clearTimeout(warnTimer);
+                    if (myGen === mpInstanceGeneration) {
+                        debugState.sendAttempts = (debugState.sendAttempts || 0) + 1;
+                        mpSendStall = 0;
+                        if (debugState.lastSendError === 'ABORTED' || !debugState.lastSendError) debugState.lastSendError = null;
+                        if (debugState.lastError && debugState.lastError.indexOf('MP-SEND') === 0) debugState.lastError = 'none';
+                    }
+                    finish(true);
+                }).catch((e) => {
+                    clearTimeout(warnTimer);
+                    const msg = e && e.message ? e.message : String(e);
+                    const isAbort = /abort/i.test(msg);
+                    finish(false);
+                    if (myGen !== mpInstanceGeneration) return;  // 过期实例的错误，忽略
+                    if (isAbort) {
+                        debugState.lastSendError = 'ABORTED: ' + msg;
+                        debugState.lastError = 'MP-ABORT: MediaPipe 实例已损坏（WASM abort），正在重建…';
+                        try { mpRebuildHands('WASM abort'); } catch (_) {}
+                    } else {
+                        debugState.lastSendError = msg;
+                    }
+                });
+            });
+        }
+
+        // 重建 hands 实例：WASM abort 后实例不可恢复，只能丢弃重来。
+        function mpRebuildHands(reason) {
+            if (mpRebuilding) return;
+            mpRebuilding = true;
+            mpInstanceGeneration++;
+            const oldHands = hands;
+            debugState.mpRebuildCount = (debugState.mpRebuildCount || 0) + 1;
+            debugState.mediaPipeReady = false;
+            debugState._mpRebuildReason = reason;
+            try { if (typeof hands.close === 'function') hands.close(); } catch (_) {}
+            hands = null;
+            setTimeout(() => {
+                try {
+                    const nh = new window.Hands({
+                        locateFile: (file) => `mp-hands/${file}`
+                    });
+                    nh.setOptions({
+                        maxNumHands: 2,
+                        modelComplexity: 1,
+                        minDetectionConfidence: 0.5,
+                        minTrackingConfidence: 0.5
+                    });
+                    nh.onResults(onResults);
+                    hands = nh;
+                    const initP = (typeof nh.initialize === 'function') ? nh.initialize() : Promise.resolve();
+                    Promise.resolve(initP).then(() => {
+                        debugState.mediaPipeReady = true;
+                        debugState.lastError = 'none';
+                        debugState.lastSendError = null;
+                        mpSendStall = 0;
+                        mpSendBusy = false;
+                        mpRebuilding = false;
+                    }).catch((e) => {
+                        debugState.lastError = 'MP-REBUILD-FAIL: ' + (e && e.message ? e.message : String(e));
+                        mpRebuilding = false;
+                    });
+                } catch (e) {
+                    debugState.lastError = 'MP-REBUILD-FAIL: ' + (e && e.message ? e.message : String(e));
+                    mpRebuilding = false;
+                }
+            }, 300);
+            // 兜底：5 秒内没重建完成就放弃，避免永久卡在 building 状态
+            setTimeout(() => {
+                if (mpRebuilding) { mpRebuilding = false; mpSendBusy = false; }
+            }, 5000);
+            try { void oldHands; } catch (_) {}
+        }
         let particleTexture = null;  // 光点圆形纹理（全局共享，给背景星空/主形态/烟花共用）
 
         // 祝福语映射：伸出手指数 -> 祝福
@@ -716,6 +866,11 @@
                 MORPH: MORPH,
                 setTarget: function (m) { targetMorph = m; morphTransition = 0; }
             };
+            // 【诊断钩子】暴露 hands 实例，方便在控制台/CDP 里直接排查 send 挂起问题
+            window.__mpHands = function () { return hands; };
+            window.__mpVideo = function () { return videoElement; };
+            // 【诊断钩子】暴露串行调度器：外部高频调用也不会造成重叠（内部保证只允许一帧在飞）
+            window.__mpSendFrame = mpSendFrame;
         } catch(_) { /* ignore */ }
 
         // 全局异常捕获：写入 Debug 面板，避免 onResults/animate 报错后 silent
@@ -3478,6 +3633,7 @@
                     `SendErr: ${debugState.lastSendError ? ('<b style="color:#ff8a80">'+debugState.lastSendError+'</b>') : '—'}<br>` +
                     `❤️Heart: 4指=${detectHeartGesture.debugTipDist}(目标4/4) | 直根数=${detectHeartGesture.debugPinchRatio}(≥4) | 最大直比=${detectHeartGesture.debugMidRatio}(≥1.30) | 拇指弯=${detectHeartGesture.debugFolded === 0 ? '是✅' : '否❌'} | 拇指比=${detectHeartGesture.debugThumbRatio ?? '—'}(≥1.15) | 判定=<b style="color:${detectHeartGesture.debugResult >= 2 ? '#ff6b9d' : (detectHeartGesture.debugResult === 1 ? '#ffe58a' : '#888')}">${detectHeartGesture.debugResult ?? 0}</b><br>` +
                     `🎯Morph稳定器: 切换次数=${debugState._morphSwitchCount ?? 0} | 候选=${debugState._morphPending ?? '—'} | 冷却=${((typeof performance!=='undefined'?performance.now():Date.now()) - _lastMorphSwitchAt) < MORPH_COOLDOWN_MS ? '⏳' : '✅'}<br>` +
+                    `🔧MP调度: busy=${mpSendBusy ? 'Y' : 'N'} | 重建次数=${debugState.mpRebuildCount ?? 0} | 连续超时=${mpSendStall} | 代数=${mpInstanceGeneration}${mpRebuilding ? ' | <b style="color:#ffb74d">重建中…</b>' : ''}<br>` +
                     `📏fingers: folded=${debugState._foldedCount ?? '—'} | ext=${debugState._extendedCount ?? '—'} | numExt=${debugState._numExtended ?? '—'} | maxRatio=${debugState._maxExtendedRatio ?? '—'} | thumbExt=${debugState._thumbExtended ?? '—'}[A:${debugState._thumbRatio ?? '—'} B:${debugState._thumbAngleDeg ?? '—'}° C:${debugState._thumbTipNear ?? '—'}=${debugState._thumbExtABCRaw ?? '...'}] | open=${debugState._openAmountPct ?? '—'}% | pinchR=${debugState._pinchR ?? '—'} | CP=${debugState._clearlyPinching ?? '—'} | Strict=${debugState._openStrict ?? '—'}(${debugState._openConds ?? '-------'})<br>` +
                     `🔄Rotation: 基速=${debugState._rotBase ?? '—'} 手控=${debugState._rotHand ?? '—'} 总速=${debugState._rotTotal ?? '—'} rad/s | yaw=${debugState._rotY ?? '—'} | handΔx(raw=${(debugState._handDxRaw||0).toFixed(4)} smooth=${(debugState._handDxSmoothed||0).toFixed(4)} ${debugState._hasHandThisFrame?'👋🏼':'⚪️'})<br>` +
                     `JS: ${debugState.lastJsError}`;
@@ -4528,10 +4684,8 @@
                     // 既不 resolve 也不 reject（WASM 图还没建好时会这样静默挂起），
                     // await 就永远不返回 → finally 不执行 → rAF 不再重排 →
                     // 整个帧循环彻底停摆，表现为 Send=0 / OnResults=0 / 无骨架 / 预览也不刷新。
-                    // 现在改成：同一时刻只允许一帧在飞 + 到点强制放行，循环永远不会被单帧拖死。
-                    let sendInFlight = false;
-                    let sendStallCount = 0;
-                    const SEND_TIMEOUT_MS = 5000;
+                    // 现在改成：交给全局 mpSendFrame 串行调度（同一时刻只允许一帧在飞，
+                    // 超时不释放互斥、abort 自动重建实例），循环永远不会被单帧拖死。
                     const onFrame = async () => {
                         if (!rafRunning || !debugState.cameraStarted) return;
                         try {
@@ -4570,34 +4724,13 @@
                                     var hasReady = !!(videoElement.readyState && videoElement.readyState >= 2);
                                     var timePassed = (performance.now() - startedAt) > 5000;
                                     if (hasSz || hasReady || timePassed) {
-                                        // 不 await：上一帧还在飞就跳过这一帧，保证 rAF 永远能继续排下一帧
-                                        if (!sendInFlight) {
-                                            sendInFlight = true;
-                                            let guardTimer = null;
-                                            const guard = new Promise(function (_, reject) {
-                                                guardTimer = setTimeout(function () {
-                                                    reject(new Error('send-timeout'));
-                                                }, SEND_TIMEOUT_MS);
-                                            });
-                                            Promise.race([hands.send({image: videoElement}), guard])
-                                                .then(function () {
-                                                    clearTimeout(guardTimer);
-                                                    debugState.sendAttempts = (debugState.sendAttempts || 0) + 1;
-                                                    sendStallCount = 0;
-                                                })
-                                                .catch(function (e) {
-                                                    clearTimeout(guardTimer);
-                                                    const msg = e && e.message ? e.message : String(e);
-                                                    debugState.lastSendError = msg;
-                                                    if (msg === 'send-timeout') {
-                                                        sendStallCount++;
-                                                        debugState.lastError = 'MP-SEND: send() 超过 ' + (SEND_TIMEOUT_MS / 1000) + 's 未返回（已跳过该帧，累计 ' + sendStallCount + ' 次）';
-                                                    }
-                                                })
-                                                .finally(function () {
-                                                    sendInFlight = false;
-                                                });
-                                        }
+                                        // 【2026-11-11 关键修复】不再用 Promise.race + finally 释放互斥。
+                                        // 旧写法超时后立即 sendInFlight=false，但被甩在后面的 hands.send()
+                                        // 仍在 WASM 里跑；下一帧马上又发一个 → 两个 send 重叠 → WASM abort，
+                                        // 实例永久损坏（后续 send 全部 Aborted，永远没有骨架）。
+                                        // 现在统一交给 mpSendFrame：全局只允许一帧在飞，超时只告警不释放，
+                                        // 连续超时 / abort 由它负责重建实例。这里不 await，保证 rAF 不卡。
+                                        mpSendFrame(videoElement);
                                     }
                                 }
                             }
@@ -4646,10 +4779,7 @@
                 if (shouldTryB && window.Camera && typeof window.Camera === 'function' && hands) {
                     try {
                         let _cuMPWarned = false;
-                        // 方案B 是独立作用域（进不了方案A 的 try 块），所以这里自己声明一套防死锁变量
-                        let sendInFlightB = false;
-                        let sendStallCountB = 0;
-                        const SEND_TIMEOUT_MS_B = 5000;
+                        // 方案B 同样复用全局 mpSendFrame 串行调度器，不再自己维护互斥变量
                         const cameraUtils = new window.Camera(videoElement, {
                             onFrame: async () => {
                                 // ========== 【关键修复①B：CameraUtils 也独立画预览】============
@@ -4673,34 +4803,8 @@
                                             debugState.lastError = "CameraUtils: 等待 Hands.initialize() 完成…（" + (camStartedAt_B ? Math.ceil(6 - elapsed_B) + "s 后强行启动" : "准备中") + "）";
                                             _cuMPWarned = true;
                                         } else {
-                                            // 同样不 await，理由见方案A的「防死锁」注释
-                                            if (!sendInFlightB) {
-                                                sendInFlightB = true;
-                                                let guardTimerB = null;
-                                                const guardB = new Promise(function (_, reject) {
-                                                    guardTimerB = setTimeout(function () {
-                                                        reject(new Error('send-timeout'));
-                                                    }, SEND_TIMEOUT_MS_B);
-                                                });
-                                                Promise.race([hands.send({image: videoElement}), guardB])
-                                                    .then(function () {
-                                                        clearTimeout(guardTimerB);
-                                                        debugState.sendAttempts = (debugState.sendAttempts || 0) + 1;
-                                                        sendStallCountB = 0;
-                                                    })
-                                                    .catch(function (e) {
-                                                        clearTimeout(guardTimerB);
-                                                        const msg = e && e.message ? e.message : String(e);
-                                                        debugState.lastSendError = msg;
-                                                        if (msg === 'send-timeout') {
-                                                            sendStallCountB++;
-                                                            debugState.lastError = 'MP-SEND: send() 超过 ' + (SEND_TIMEOUT_MS_B / 1000) + 's 未返回（已跳过该帧，累计 ' + sendStallCountB + ' 次）';
-                                                        }
-                                                    })
-                                                    .finally(function () {
-                                                        sendInFlightB = false;
-                                                    });
-                                            }
+                                            // 【2026-11-11】同样交给全局串行调度器，绝不允许两帧重叠
+                                            mpSendFrame(videoElement);
                                         }
                                     }
                                 } catch(sendErr) {
