@@ -267,10 +267,24 @@
                             '请用 Edge/Chrome 打开：<code style="color:#ffeb3b">http://127.0.0.1:8000/index.html</code>');
                         return;
                     }
+                    // ===== 【2026-11-11】file:// 兜底提示 =====
+                    // file:// 下 Chrome/Edge 的摄像头策略不稳定：有的版本完全不弹权限框、直接 NotAllowedError，
+                    // 而 navigator.permissions.query({name:'camera'}) 在 file:// 下常常直接 reject，
+                    // 于是原来会一直停在 unknown 分支，用户只看到"正在请求摄像头权限…"却不知道原因。
+                    // 这里显式识别并给出可执行的解决方式。
+                    var isFileProto = (location.protocol === 'file:');
                     if (!navigator.permissions || !navigator.permissions.query) {
-                        saveMsg('unknown',
-                            '🎯 点击下方按钮后会弹出摄像头权限申请框（请选择「允许」）<br>' +
-                            '授权后即可使用 1/2/3 指祝福词 / 爱心捏合 / 五指散开 等手势。');
+                        if (isFileProto) {
+                            saveMsg('file',
+                                '⚠️ <b style="color:#ffb74d">当前是本地文件方式（file://）打开，浏览器可能不弹摄像头授权</b><br>' +
+                                '请改用本地服务访问：在该目录执行 <code style="color:#ffeb3b">python -m http.server 8000</code>，' +
+                                '再打开 <code style="color:#ffeb3b">http://127.0.0.1:8000/index.html</code><br>' +
+                                '或直接访问线上版 <code style="color:#ffeb3b">wuwenjia123.github.io/gerenjianli/lizixiaoguo/</code>');
+                        } else {
+                            saveMsg('unknown',
+                                '🎯 点击下方按钮后会弹出摄像头权限申请框（请选择「允许」）<br>' +
+                                '授权后即可使用 1/2/3 指祝福词 / 爱心捏合 / 五指散开 等手势。');
+                        }
                         return;
                     }
                     navigator.permissions.query({ name: 'camera' }).then(function (status) {
@@ -299,9 +313,17 @@
                         show();
                         try { status.addEventListener && status.addEventListener('change', show); } catch (_) {}
                     }).catch(function () {
-                        saveMsg('unknown',
-                            '🎯 点击下方绿色按钮 → 浏览器弹出摄像头权限申请 → 选择「允许」<br>' +
-                            '授权后即可使用所有手势。');
+                        if (isFileProto) {
+                            saveMsg('file',
+                                '⚠️ <b style="color:#ffb74d">当前是本地文件方式（file://）打开，浏览器可能不弹摄像头授权</b><br>' +
+                                '请改用本地服务：在该目录执行 <code style="color:#ffeb3b">python -m http.server 8000</code>，' +
+                                '再打开 <code style="color:#ffeb3b">http://127.0.0.1:8000/index.html</code><br>' +
+                                '或直接访问线上版 <code style="color:#ffeb3b">wuwenjia123.github.io/gerenjianli/lizixiaoguo/</code>');
+                        } else {
+                            saveMsg('unknown',
+                                '🎯 点击下方绿色按钮 → 浏览器弹出摄像头权限申请 → 选择「允许」<br>' +
+                                '授权后即可使用所有手势。');
+                        }
                     });
                 } catch (e) {
                     saveMsg('unknown', '');
@@ -341,15 +363,31 @@
 
                 // ========== 【核心修复】同步发起 getUserMedia 请求（此时 user activation token 一定存在）==========
                 // 不 await，只创建 Promise，交给 module 层的 startCameraNow 去 await 结果
+                // 【2026-11-11 关键修复】必须挂上 catch：
+                //   Chrome/Edge 里 getUserMedia 被拒绝时，如果 Promise 在"尚未被消费"之前就 reject，
+                //   浏览器会把它报成 Unhandled Promise Rejection。某些版本下这个 rejection 会连带把
+                //   send() 的 Promise 状态搞乱，表现为「点了按钮后按钮永远停在『正在请求摄像头权限…』、
+                //   主线程卡死、连截图都超时」。
+                //   这里立刻挂 catch 把 rejection 标记住，不让它变成 unhandled；真正的错误处理仍在 startCameraNow 里做。
                 if (!__cameraBootstrap.gumPromise
                     && navigator && navigator.mediaDevices
                     && typeof navigator.mediaDevices.getUserMedia === 'function') {
                     try {
-                        __cameraBootstrap.gumPromise = navigator.mediaDevices.getUserMedia({
+                        var _gumP = navigator.mediaDevices.getUserMedia({
                             video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
                             audio: false
                         });
-                    } catch (gumE) { /* 不抛出，后面 startCameraNow 会重试并给错误提示 */ }
+                        __cameraBootstrap.gumError = null;
+                        _gumP.then(function (s) {
+                            __cameraBootstrap.gumStream = s;
+                        }, function (e) {
+                            // 只记录，不 rethrow —— rethrow 会造成 unhandled rejection
+                            __cameraBootstrap.gumError = e;
+                        });
+                        __cameraBootstrap.gumPromise = _gumP;
+                    } catch (gumE) {
+                        __cameraBootstrap.gumError = gumE;
+                    }
                 }
 
                 // 如果 module script 已经准备好了（它会把 moduleStartFn 注入），直接调用
@@ -4299,19 +4337,40 @@
                 //   权限弹窗一定会弹（如果状态是 prompt）。如果在这里再调一次 getUserMedia，可能因中间 await 丢失 token 导致不弹窗。
                 var stream;
                 var bootStrap = window.__cameraBootstrap;
+                // 【2026-11-11】给 getUserMedia 加 20s 超时：
+                //   file:// 或某些安全策略下，getUserMedia 可能既不 resolve 也不 reject（静默悬挂），
+                //   原来的 await 会永久卡住 → 按钮永远停在"正在请求摄像头权限…"、loading 层不消失。
+                //   套一层 Promise.race，超时就当作失败走错误提示，至少让用户能重试。
+                const GUM_TIMEOUT_MS = 20000;
+                const withTimeout = (p, ms) => {
+                    let timer = null;
+                    const guard = new Promise((_, reject) => {
+                        timer = setTimeout(() => {
+                            const e = new Error('getUserMedia 超过 ' + Math.round(ms / 1000) + ' 秒无响应');
+                            e.name = 'TimeoutError';
+                            reject(e);
+                        }, ms);
+                    });
+                    return Promise.race([Promise.resolve(p), guard]).finally(() => clearTimeout(timer));
+                };
                 if (bootStrap && bootStrap.gumPromise && !bootStrap.gumConsumed) {
                     bootStrap.gumConsumed = true;
-                    stream = await bootStrap.gumPromise;
+                    try {
+                        stream = await withTimeout(bootStrap.gumPromise, GUM_TIMEOUT_MS);
+                    } finally {
+                        // 消费完立刻清掉，避免下一次点击误用这个已经 rejected 的 Promise
+                        bootStrap.gumPromise = null;
+                    }
                 } else {
                     // 兜底：如果没预创建才在这里调一次（用户点按钮时 module 还没加载好的场景）
-                    stream = await navigator.mediaDevices.getUserMedia({
+                    stream = await withTimeout(navigator.mediaDevices.getUserMedia({
                         video: {
                             width:  { ideal: 640 },
                             height: { ideal: 480 },
                             facingMode: 'user'    // 前置摄像头
                         },
                         audio: false
-                    });
+                    }), GUM_TIMEOUT_MS);
                 }
 
                 // 成功拿到流：赋给 video 元素并 play
@@ -4484,9 +4543,14 @@
                 debugState.gumAError = { name: errName, message: errMsg, full: errMsg + (errName ? " [" + errName + "]" : "") };
                 debugState.getUserMediaResult = "err-gum-" + errName;
 
-                // ============== 方案B（备用）：MediaPipe CameraUtils（getUserMedia 失败时兜底）==============
+                // ============== 方案B（备用）：MediaPipe CameraUtils ==============
+                // 【2026-11-11 关键修复】只在"有设备但方案A异常"时才尝试方案B。
+                //   原因：CameraUtils 内部调的还是同一个 getUserMedia，权限被拒时它必然再失败一次，
+                //   而它的 catch 里有 alert()（会把主线程冻死，用户看到按钮永远停在"正在请求摄像头权限…"）。
+                //   现在 alert 已从 camera_utils.js 删掉，但重复尝试也无意义，直接跳过能给更快的错误提示。
                 var bSucceeded = false;
-                if (window.Camera && typeof window.Camera === 'function' && hands) {
+                var shouldTryB = (errName !== 'NotAllowedError' && errName !== 'PermissionDeniedError');
+                if (shouldTryB && window.Camera && typeof window.Camera === 'function' && hands) {
                     try {
                         let _cuMPWarned = false;
                         // 方案B 是独立作用域（进不了方案A 的 try 块），所以这里自己声明一套防死锁变量
