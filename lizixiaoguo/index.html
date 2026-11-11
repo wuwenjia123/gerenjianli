@@ -4687,7 +4687,17 @@
                     // 现在改成：交给全局 mpSendFrame 串行调度（同一时刻只允许一帧在飞，
                     // 超时不释放互斥、abort 自动重建实例），循环永远不会被单帧拖死。
                     const onFrame = async () => {
-                        if (!rafRunning || !debugState.cameraStarted) return;
+                        // 【2026-11-11 关键修复 · 骨架消失的真凶】
+                        // 原来第一行是 `if (!rafRunning || !debugState.cameraStarted) return;`，
+                        // 而 requestAnimationFrame(onFrame) 写在下面的 finally 里 ——
+                        // 这个 return 在 try 之前，**直接跳过整个 try/finally，rAF 永远不再排队**。
+                        // tryStartRaf 由 loadedmetadata/loadeddata 事件触发，这两个事件可能早于
+                        // cameraStarted=true 到达（尤其重试/热启动），于是首帧进来 cameraStarted 还是 false
+                        // → 一个 return 把整个帧循环永久打死 → Send 永远 0、没有绿色骨架。
+                        // 现在：先无条件重排下一帧，再判断是否要干活。
+                        if (!rafRunning) return;                       // 只有显式停止才终止循环
+                        requestAnimationFrame(onFrame);                 // ← 先续命，绝不中断
+                        if (!debugState.cameraStarted) return;          // 还没启动好：本帧跳过，下帧再来
                         try {
                             // ========== 【关键修复①：预览独立绘制，不依赖 onResults】============
                             // 不管 MediaPipe 是否初始化完成、不管是否 send 帧，只要 video 有画面就先画到预览窗口。
@@ -4737,9 +4747,9 @@
                         } catch(sendErr) {
                             // 每帧都直接写 lastSendError（不判断空/相等，避免"同错误反复发生但不更新/被其他逻辑清空后不重写"的边缘bug）
                             debugState.lastSendError = sendErr && sendErr.message ? sendErr.message : String(sendErr);
-                        } finally {
-                            requestAnimationFrame(onFrame);
                         }
+                        // 注意：这里不再 requestAnimationFrame(onFrame)。
+                        // 重排已提前到函数开头无条件执行，保证任何 return / 异常都不会打断循环。
                     };
                     requestAnimationFrame(onFrame);
                 };
