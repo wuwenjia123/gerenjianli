@@ -441,8 +441,8 @@
             ☝️ <b>1根手指</b>: 粒子→「My friend」<br>
             ✌️ <b>2根手指</b>: 粒子→「天天开心」<br>
             🤙 <b>3根手指</b>: 粒子→「永远幸运」<br>
-            ✋ <b>五指张开</b>: 星球散开形态<br>
-            💕 <b>伸4根手指</b>: 聚合成爱心（食/中/无/小伸直 + 拇指弯曲；五指全部伸直=星球张开）<br>
+            💕 <b>伸4根手指</b>: 聚合成爱心（食/中/无/小 四根全伸直 + 拇指内收；三四指混比不会触发）<br>
+            ✋ <b>五指全伸直</b>: 星球散开形态（拇指也要伸出去）<br>
         </div>
         <div id="gesture-status" class="status">等待手势...</div>
         <div id="debug-panel" style="margin-top: 10px; font-size: 10px; opacity: 0.6; line-height: 1.5; font-family: monospace;"></div>
@@ -583,6 +583,55 @@
         let lastBlessingCount = 0;   // 上次显示的手指数
         let blessingStableFrames = 0; // 手势稳定帧数（1/2指），防抖动
         const BLESSING_STABLE_THRESHOLD = 6; // 需要稳定多少帧才显示
+
+        // ==========================================
+        // 【形态稳定器 2026-11-11】统一迟滞 —— 解决"三指误判爱心""来回跳转很乱"
+        //   1) 所有形态切换（爱心/星球/文字）都要连续稳定 N 帧才生效
+        //   2) 切换后进入冷却，冷却期内只有"强证据"能打断，弱证据只累积不切
+        // 依据：真实手指边界在 3<->4 之间会抖 +-1 根，旧逻辑爱心/星球零防抖，边界一抖就来回切
+        // ==========================================
+        const MORPH_STABLE_FRAMES = 5;    // 弱证据：连续稳定多少帧才允许切换形态
+        const MORPH_COOLDOWN_MS   = 520;  // 切换后冷却时长（ms），冷却期内只认强证据
+        const HEART_STRONG_NUMEXT = 4;    // 强证据：4 指都明显伸直
+        const HEART_STRONG_MAXR   = 1.30; // 强证据：最大伸直比
+        let _pendingMorph = null;         // 当前正在累积的候选形态
+        let _pendingFrames = 0;           // 该候选已连续稳定帧数
+        let _lastMorphSwitchAt = 0;       // 上次形态切换时间戳（performance.now）
+        let _morphSwitchCount = 0;        // 形态切换次数（调试面板可看抖动是否下降）
+
+        // 统一形态切换入口：
+        //   isStrong = true  -> 手型已非常明确，只需 2 帧，且可打断冷却
+        //   isStrong = false -> 普通证据，需连续 MORPH_STABLE_FRAMES 帧，冷却期内不切
+        function requestMorph(nextMorph, isStrong) {
+            if (nextMorph === undefined || nextMorph === null) {
+                return { changed: false, morph: null, pending: false };
+            }
+            const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+            const inCooldown = (now - _lastMorphSwitchAt) < MORPH_COOLDOWN_MS;
+            // 冷却期内：弱证据只记账不切，避免"切完立刻又切回去"
+            if (inCooldown && !isStrong) {
+                return { changed: false, morph: null, pending: true };
+            }
+            if (targetMorph === nextMorph) {
+                _pendingMorph = nextMorph;
+                _pendingFrames = MORPH_STABLE_FRAMES;
+                return { changed: false, morph: nextMorph, pending: false };
+            }
+            // 累积稳定帧
+            if (_pendingMorph === nextMorph) _pendingFrames++;
+            else { _pendingMorph = nextMorph; _pendingFrames = 1; }
+            const need = isStrong ? 2 : MORPH_STABLE_FRAMES;
+            if (_pendingFrames < need) return { changed: false, morph: nextMorph, pending: true };
+            // 放行切换
+            morphTransDur = calcMorphDuration(targetMorph, nextMorph);
+            targetMorph = nextMorph;
+            morphTransition = 0;
+            _lastMorphSwitchAt = now;
+            _morphSwitchCount++;
+            _pendingMorph = nextMorph;
+            _pendingFrames = 0;
+            return { changed: true, morph: nextMorph, pending: false };
+        }
         // ====== OK手势（触发绿色四叶草）稳定帧计数（替换原双手合拢+竖大拇指） ======
         // OK手势判定：拇指+食指指尖捏合（距离<掌宽*0.42） + 食/中/无/小四指全伸直（foldedCount=0） + 拇指伸直
         let lastOKGesture = false;        // 上一帧是否为 OK 手势
@@ -643,6 +692,31 @@
         // 【关键】把调试状态暴露到 window，方便在浏览器 DevTools / evaluate 里直接检查
         // 之前 debugState 是 module 内部 const，外部读不到，用户反馈"没弹权限"无法定位到底卡在哪一步
         try { window._particleDebugState = debugState; } catch(_) { /* sandbox 环境可能禁止 */ }
+        // 【测试钩子】只暴露"纯逻辑"函数（不触发渲染、不依赖摄像头），供 CDP 自动化验证手势判定与形态稳定器。
+        // 手势判定依赖 MediaPipe 骨架点，无法在无摄像头环境下真跑，但"给定手指统计量 → 是否爱心"
+        // 以及"给定形态序列 → 切换几次"这两段是纯函数，必须可测，否则每次调阈值只能靠肉眼。
+        try {
+            window.__gestureTest = {
+                heart: function (ext, numExt, thumbExt, folded, maxRatio, thumbRatio) {
+                    // 传一个 21 点的占位数组，只为通过"landmarks 完整性"防御检查；
+                    // 判定本身只消费后面的统计量，不读点坐标。
+                    var stub = [];
+                    for (var i = 0; i < 21; i++) stub.push({ x: 0, y: 0, z: 0 });
+                    return detectHeartGesture(stub, ext, numExt, thumbExt, folded, maxRatio, thumbRatio);
+                },
+                resetMorph: function () {
+                    _lastMorphSwitchAt = -1e9; _pendingMorph = null; _pendingFrames = 0; _morphSwitchCount = 0;
+                },
+                requestMorph: function (m, strong) {
+                    var r = requestMorph(m, strong);
+                    return { changed: r.changed, pending: r.pending, target: targetMorph, cur: currentMorph,
+                             count: _morphSwitchCount, lastAt: _lastMorphSwitchAt };
+                },
+                now: function () { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); },
+                MORPH: MORPH,
+                setTarget: function (m) { targetMorph = m; morphTransition = 0; }
+            };
+        } catch(_) { /* ignore */ }
 
         // 全局异常捕获：写入 Debug 面板，避免 onResults/animate 报错后 silent
         window.addEventListener('error', (e) => {
@@ -3402,7 +3476,8 @@
                     `cur: <b style="color:#9ae0ff">${debugState.currentMorph}</b> → tgt: <b style="color:#ffe58a">${debugState.targetMorph}</b><br>` +
                     `Err: ${debugState.lastError} | FWQ: ${fireworkSpawnQueue.length} | Blessed: ${lastBlessingCount ?? 0}(${blessingStableFrames ?? 0}/${BLESSING_STABLE_THRESHOLD})<br>` +
                     `SendErr: ${debugState.lastSendError ? ('<b style="color:#ff8a80">'+debugState.lastSendError+'</b>') : '—'}<br>` +
-                    `❤️Heart: 4指=${detectHeartGesture.debugTipDist}(目标4/4) | 直根数=${detectHeartGesture.debugPinchRatio}(≥3) | 最大直比=${detectHeartGesture.debugMidRatio}(≥1.22) | 拇指弯=${detectHeartGesture.debugFolded === 0 ? '是✅' : '否❌'}<br>` +
+                    `❤️Heart: 4指=${detectHeartGesture.debugTipDist}(目标4/4) | 直根数=${detectHeartGesture.debugPinchRatio}(≥4) | 最大直比=${detectHeartGesture.debugMidRatio}(≥1.30) | 拇指弯=${detectHeartGesture.debugFolded === 0 ? '是✅' : '否❌'} | 拇指比=${detectHeartGesture.debugThumbRatio ?? '—'}(≥1.15) | 判定=<b style="color:${detectHeartGesture.debugResult >= 2 ? '#ff6b9d' : (detectHeartGesture.debugResult === 1 ? '#ffe58a' : '#888')}">${detectHeartGesture.debugResult ?? 0}</b><br>` +
+                    `🎯Morph稳定器: 切换次数=${debugState._morphSwitchCount ?? 0} | 候选=${debugState._morphPending ?? '—'} | 冷却=${((typeof performance!=='undefined'?performance.now():Date.now()) - _lastMorphSwitchAt) < MORPH_COOLDOWN_MS ? '⏳' : '✅'}<br>` +
                     `📏fingers: folded=${debugState._foldedCount ?? '—'} | ext=${debugState._extendedCount ?? '—'} | numExt=${debugState._numExtended ?? '—'} | maxRatio=${debugState._maxExtendedRatio ?? '—'} | thumbExt=${debugState._thumbExtended ?? '—'}[A:${debugState._thumbRatio ?? '—'} B:${debugState._thumbAngleDeg ?? '—'}° C:${debugState._thumbTipNear ?? '—'}=${debugState._thumbExtABCRaw ?? '...'}] | open=${debugState._openAmountPct ?? '—'}% | pinchR=${debugState._pinchR ?? '—'} | CP=${debugState._clearlyPinching ?? '—'} | Strict=${debugState._openStrict ?? '—'}(${debugState._openConds ?? '-------'})<br>` +
                     `🔄Rotation: 基速=${debugState._rotBase ?? '—'} 手控=${debugState._rotHand ?? '—'} 总速=${debugState._rotTotal ?? '—'} rad/s | yaw=${debugState._rotY ?? '—'} | handΔx(raw=${(debugState._handDxRaw||0).toFixed(4)} smooth=${(debugState._handDxSmoothed||0).toFixed(4)} ${debugState._hasHandThisFrame?'👋🏼':'⚪️'})<br>` +
                     `JS: ${debugState.lastJsError}`;
@@ -3423,7 +3498,15 @@
         const previewCtx = previewCanvas.getContext('2d');
 
         // 爱心手势检测
-        function detectHeartGesture(landmarks, /* 附加来自onResults的已有计算结果，避免重复算 */ _ext, _numExt, _thumbExt, _folded, _maxRatio) {
+        // 【返回值】0 = 不是爱心；1 = 弱证据爱心；2 = 强证据爱心（4指全弯=真·四指爱心）
+        // 【2026-11-11 修复"三指被误判成爱心"】旧条件 `folded===0 && ext===4` 只要求食/中/无/小
+        //   四根"没有弯"（dTip >= dMcp*1.15）。三根手指伸出时，那根收起的手指往往只是"没明显弯"，
+        //   仍被算进 folded=0 → ext=4 → 加上 numExt=3 恰好卡在 `numExt<3` 的边界外通过，
+        //   于是"三根手指"直接落进爱心。现在两个方向同时堵死：
+        //   (a) 加严：除大拇外四指全部明显伸直 numExt===4 且 maxRatio>=1.30（4指爱心必须四根都立起来）
+        //   (b) 加"4指含拇指"结构约束：拇指自身也要有明显长度（比例>=1.15），
+        //       否则就是"拇指贴掌心 + 三四根手指"的松散手型，不是爱心
+        function detectHeartGesture(landmarks, /* 附加来自onResults的已有计算结果，避免重复算 */ _ext, _numExt, _thumbExt, _folded, _maxRatio, _thumbRatio) {
             // ===== 【爱心手势重定义：伸4根手指】食/中/无/小 4指伸直 + 拇指弯曲 =====
             // 与"五指张开（5指全伸=星球）"互斥：拇指必须是弯的（不是伸直状态）
             // 与"1/2/3指祝福词"互斥：extendedCount必须正好=4
@@ -3439,7 +3522,8 @@
                 detectHeartGesture.debugPinchRatio = "---";
                 detectHeartGesture.debugFolded = 0;
                 detectHeartGesture.debugMidRatio = "---";
-                return false;
+                detectHeartGesture.debugResult = 0;
+                return 0;
             }
             const ext = typeof _ext === 'number' ? _ext : -1;
             const folded = typeof _folded === 'number' ? _folded : -1;
@@ -3454,29 +3538,44 @@
             detectHeartGesture.debugMidRatio = maxRatio ? maxRatio.toFixed(2) : "0.00";
             detectHeartGesture.debugFolded = thumbExt ? 1 : 0;  // 0=拇指弯=爱心符合；1=拇指直=要排除（是5指张开）
 
-            // ===== 条件1：食/中/无/小 4指必须"都不弯"（foldedCount === 0 且 extendedCount === 4）=====
-            // foldedCount 是 onResults 里用 Tip < PIP*1.15 判"弯"的根数；extendedCount 是"不弯"的根数（恒=4-foldedCount）
-            if (folded !== 0 || ext !== 4) return false;
+            const thumbRatio = (typeof _thumbRatio === 'number') ? _thumbRatio : 0;
+            detectHeartGesture.debugThumbRatio = thumbRatio ? thumbRatio.toFixed(2) : "0.00";
+            detectHeartGesture.debugResult = 0;
 
-            // ===== 条件2：至少 3 根手指是"明显伸直"（防止手指微翘被判成4指）=====
-            // 且 maxExtendedRatio ≥ 1.22（至少有1根真的伸得很直，排除松散握拳）
-            if (numExt < 3 || maxRatio < 1.22) return false;
+            // ===== 条件1：食/中/无/小 4指必须"都不弯"（foldedCount === 0 且 extendedCount === 4）=====
+            // foldedCount 是 onResults 里用 Tip < MCP*1.15 判"弯"的根数；extendedCount 是"不弯"的根数（恒=4-foldedCount）
+            if (folded !== 0 || ext !== 4) return 0;
+
+            // ===== 条件2：四根必须"全都明显伸直"（numExt === 4），不再容忍 3 根 =====
+            // 【本次修复核心】旧版 numExt < 3 才拦，numExt=3 直接通过 —— 这正是"三指出爱心"的入口。
+            // 真·四指爱心（食/中/无/小立起）四根都会明显伸长，要求 4 根全通过不会误伤，
+            // 但会把"三根立起 + 一根半收"的过渡手型挡在外面。
+            if (numExt < 4) return 0;
+            if (maxRatio < 1.30) return 0;
 
             // ===== 条件3：拇指必须是弯曲状态（排除"五指张开=星球形态"）=====
             // 这是 4指(爱心) vs 5指(张开) 的唯一核心区分：拇指弯=4指；拇指直=5指张开
             // 用 onResults 传进来的 thumbExtended（false=弯）
-            if (thumbExt) return false;
+            if (thumbExt) return 0;
 
-            // ===== 条件4：张开度要明显低（拇指和食指有夹角/距离，但4指张开的手拇食本来距离就比五指张开近）=====
-            // 复用 clearlyPinching 逻辑：若拇食真的"张开很大"→说明是五指张开的前兆/拇指刚好被误判，不是4指
-            // （这里不需要再算，因为拇指弯是硬条件，已经挡住大部分了。保留true作为兜底）
-            return true;
+            // ===== 条件4：【4指含拇指】拇指自身也得有一定长度 =====
+            // 拇指完全贴死掌心（捏进拳头里）时 thumbRatio 通常 < 1.1，
+            // 那种手型是"收着大拇指"而不是"比心"，判定为不成立。
+            if (thumbRatio > 0 && thumbRatio < 1.15) return 0;
+
+            // 走到这里：4指全伸直 + 拇指弯且仍有长度 → 爱心成立
+            // 强证据（可打断冷却）：最大伸直比 >= 1.30 且拇指弯得明确（ratio 1.15~1.45 之间说明拇指是"收着"而不是"逃逸")
+            const isStrong = (maxRatio >= 1.30) && (numExt >= 4);
+            detectHeartGesture.debugResult = isStrong ? 2 : 1;
+            return isStrong ? 2 : 1;
         }
         detectHeartGesture.debugTipDist = "---";
         detectHeartGesture.debugPinchRatio = "---";
         detectHeartGesture.debugFolded = 0;
         detectHeartGesture.debugMidRatio = "---";
-        
+        detectHeartGesture.debugThumbRatio = "---";
+        detectHeartGesture.debugResult = 0;
+
         function onResults(results) {
             try {
                 // ========== 【关键：只要 onResults 被调用了一次，MediaPipe 必定已初始化完成】==========
@@ -3818,7 +3917,9 @@
                 // 【反向兜底 thumbTipNearIndexMCP】：即使 thumbExtended=true（噪声下可能误判），只要拇指尖到食根距离 < 0.55 掌宽 → 拇指实际贴掌心 → 算"弯"，不阻挡爱心判定
                 const _thumbBentByGeometry = (thumbTipNearIndexMCP < 0.55);  // 几何兜底：距离判定"实际是否弯"
                 const _heartThumbExt = (_thumbBentByGeometry ? false : thumbExtended);
-                let isHeartGesture = detectHeartGesture(landmarks, extendedCount, numExtended, _heartThumbExt, foldedCount, maxExtendedRatio);
+                // 返回 0/1/2（0=非爱心，1=弱证据，2=强证据）
+                const heartScore = detectHeartGesture(landmarks, extendedCount, numExtended, _heartThumbExt, foldedCount, maxExtendedRatio, thumbRatio);
+                let isHeartGesture = (heartScore > 0);
 
                 // 存到debugState，在animate调试面板中可见（避免animate中访问onResults局部变量抛ReferenceError）
                 debugState._foldedCount = foldedCount;
@@ -3831,6 +3932,9 @@
                 debugState._openConds = `${openCond1?'1':'0'}${openCond2?'1':'0'}${openCond3?'1':'0'}${openCond4?'1':'0'}${(pinchRatio_G>0.80||normalizedPinchDist>0.60)?'1':'0'}${openCond6?'1':'0'}${openCond7?'1':'0'}`;
                 debugState._pinchR = pinchRatio_G.toFixed(2);
                 debugState._clearlyPinching = clearlyPinching ? 'Y' : 'N';
+                debugState._heartScore = heartScore;
+                debugState._morphSwitchCount = _morphSwitchCount;
+                debugState._morphPending = _pendingMorph ? (_pendingMorph + ':' + _pendingFrames) : '—';
 
                 // ===== 5. 判断「OK手势」👌：拇指+食指捏合（形成圈） + 其余三指（中/无/小）全部伸直 =====
                 // 关键区分：
@@ -3854,11 +3958,8 @@
                 // 【4指 vs 5指张开的核心区分】：拇指是否弯曲 → 弯=4指=爱心；直=5指=张开=星球
                 // 4指条件：extendedCount=4（4指都不弯）+ numExtended≥3（至少3根明显伸直）+ thumbExtended=false（拇指弯）
                 if (isHeartGesture) {
-                    if (targetMorph !== MORPH.HEART) {
-                        morphTransDur = calcMorphDuration(targetMorph, MORPH.HEART);
-                        targetMorph = MORPH.HEART;
-                        morphTransition = 0;
-                    }
+                    // 统一走稳定器：heartScore=2 为强证据（2 帧即切、可打断冷却），1 为弱证据（需 5 帧）
+                    requestMorph(MORPH.HEART, heartScore >= 2);
                     cameraState.isHeart = true;
                     cameraState.isFist = false;
                     cameraState.isOpen = false;
@@ -3883,11 +3984,8 @@
                 // 之前只有 foldedCount===0 一个条件太松（OK手势/松散伸手都会误判为张开），
                 // 现在必须同时满足：4指都不弯+4指都明显伸+至少1根很直+拇指也伸直+拇食明显分开+张开度≥40%
                 } else if (isOpenHandStrict) {
-                    if (targetMorph !== MORPH.PLANET) {
-                        morphTransDur = calcMorphDuration(targetMorph, MORPH.PLANET);
-                        targetMorph = MORPH.PLANET;
-                        morphTransition = 0;
-                    }
+                    // 五指全伸是极强的信号（7 条件同时满足），视为强证据
+                    requestMorph(MORPH.PLANET, true);
                     cameraState.isFist = false;
                     cameraState.isOpen = true;
                     cameraState.isHeart = false;
@@ -3929,12 +4027,9 @@
                         let textMorph = MORPH.TEXT1;
                         if (extendedCount === 2) textMorph = MORPH.TEXT2;
                         if (extendedCount === 3) textMorph = MORPH.TEXT3;
-                        
-                        if (targetMorph !== textMorph) {
-                            morphTransDur = calcMorphDuration(targetMorph, textMorph);
-                            targetMorph = textMorph;
-                            morphTransition = 0;
-                        }
+
+                        // 稳定器再兜一层：即使 6 帧稳定，也要过冷却（防止 1→2→3 指连续抖动时连切三次）
+                        requestMorph(textMorph, false);
                         
                         cameraState.isFist = false;
                         cameraState.isOpen = false;
@@ -3955,11 +4050,8 @@
 
                 // ===== 其他情况（握拳/不确定）：保持星球形态 =====
                 } else {
-                    if (targetMorph !== MORPH.PLANET) {
-                        morphTransDur = calcMorphDuration(targetMorph, MORPH.PLANET);
-                        targetMorph = MORPH.PLANET;
-                        morphTransition = 0;
-                    }
+                    // 握拳/不明确：视为弱证据回星球（需 5 帧，冷却期内不抢切）
+                    requestMorph(MORPH.PLANET, false);
                     blessingStableFrames = 0;
                     lastBlessingCount = 0;
                     thumbsUpStableFrames = 0;
@@ -3998,12 +4090,9 @@
                 debugState._hasHandThisFrame = false;
                 debugState._handX = undefined;  // 下次检测到手时重新采样基准，不会有巨大跳变
                 // smoothedDx 不立刻清零，而是自然衰减（animate 里会乘以 0.92 的衰减系数），视觉更顺滑
-                if (targetMorph !== MORPH.PLANET) {
-                    morphTransDur = calcMorphDuration(targetMorph, MORPH.PLANET);
-                    targetMorph = MORPH.PLANET;
-                    morphTransition = 0;
-                }
-                
+                // 手彻底离开视野：这本身是强信号（不会"半只手"），立刻回星球，不做长等待
+                requestMorph(MORPH.PLANET, true);
+
                 statusEl.innerText = "未检测到手";
                 statusEl.style.color = "#888";
                 
