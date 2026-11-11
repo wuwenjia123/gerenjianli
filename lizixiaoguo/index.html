@@ -565,18 +565,19 @@
         let morphTransDur = 0.4;          // 本次过渡的实际时长（秒），由 calcMorphDuration 在切换瞬间决定
         let morphDurSnap = 0.4;           // 本次过渡的基准时长（粒子飞行阶段用，缓动后的尾段会再拉长）
 
-        // ====== 形态过渡时长：星球→文字、文字→文字 都放慢，让粒子看得清 ======
-        // 之前固定 1/2.5 = 0.4 秒，粒子像瞬移；现在按形态对给不同时长：
-        //   星球 → 文字：2.8s（最舒展，体现"星云向字散开再收拢"）
-        //   文字 → 文字：2.4s（两个词若直接平移会很吵，所以把中点随机打散 → 先散成团再聚合）
-        //   其它（爱心/星球/树/烟花）：0.6s，保持原来利落的手感
+        // ====== 形态过渡时长 ======
+        // 2026-11-11 二次调整：第一版 2.8s / 2.4s 偏长（用户反馈"太久"），现压到 1.7s / 1.45s。
+        // 缩短后靠三件事保住"汇聚感"，不靠拉时长：
+        //   ① 打散权重的峰值提前到 62%（见 PHASE），保证收拢段占足 38% 的时间
+        //   ② 打散幅度不降（swellAmp 仍 0.75 / 0.55），炸开得更"狠"
+        //   ③ 缓动曲线指数从 1.6 降到 1.45，中段推进更快但收尾仍留缓冲
         function calcMorphDuration(from, to) {
             const isTextM = (m) => (m === MORPH.TEXT1 || m === MORPH.TEXT2 || m === MORPH.TEXT3 || m === MORPH.TEXT4);
             const isStaticFlat = (m) => (m === MORPH.PLANET || m === MORPH.HEART);
-            if (isTextM(to) && isStaticFlat(from)) return 2.8;
-            if (isTextM(to) && isTextM(from) && from !== to) return 2.4;
-            if (isTextM(to)) return 1.8;          // 烟花/树 → 文字：介于中间
-            return 0.6;
+            if (isTextM(to) && isStaticFlat(from)) return 1.7;   // 星球/爱心 → 文字
+            if (isTextM(to) && isTextM(from) && from !== to) return 1.45;  // 文字 → 文字
+            if (isTextM(to)) return 1.1;          // 烟花/树 → 文字
+            return 0.6;                           // 其它保持利落手感
         }
 
         let lastBlessingCount = 0;   // 上次显示的手指数
@@ -2470,24 +2471,24 @@
 
             // 平滑过渡缓动
             // 旧版用 easeOutCubic(1-(1-t)^3)：70% 的距离在前 30% 时间就走完了（1-(0.7)^3≈0.66），
-            // 视觉上「啪」一下就到位，后半段只是在原地微调 —— 拉长时长后必须换曲线。
-            // 现在：
-            //   rawToT   : 线性三段式「出发—扩散—收拢」权重，用来驱动每个粒子的飞散/自转（见下面 PHASE 段）
-            //   toT      : 1.6 次幂的居中缓动，比 cubic 柔和，起手和收尾都慢，中段推进 → 粒子清晰可辨
+            // 视觉上「啪」一下就到位，后半段只是在原地微调。
+            // 现在（1.45 次幂）：比 cubic 更缓、比 1.6 次幂更利落 —— 时长压到 1.7s 后
+            // 需要中段推进稍快一点，否则整体还是会显得拖。
             let t = morphTransition;
             const rawK = t;                                   // 0~1 线性进度
-            t = 1 - Math.pow(1 - t, 1.6);
+            t = 1 - Math.pow(1 - t, 1.45);
             const fromT = 1 - t;
             const toT   = t;
 
             // ====== 「扩散→收拢」权重：粒子不直接沿直线从 A 滑到 B，而是先被推开再聚拢 ======
-            //   0     ~ 0.15 : 0 → 0（原地起步，避免瞬移感）
-            //   0.15  ~ 0.55 : 0 → 1（明显炸开/打散，这一步是"看得见粒子变化"的关键）
-            //   0.55  ~ 1.0  : 1 → 0（收拢成目标字）
-            // 权重同时驱动：目标点的膨胀偏移（swell）+ 每个粒子的自旋涡流
+            //   0     ~ 0.12 : 0 → 0（原地起步，避免瞬移感）
+            //   0.12  ~ 0.62 : 0 → 1（炸开/打散到最大）
+            //   0.62  ~ 1.0  : 1 → 0（收拢成目标字）
+            // 时长压短后把峰值从 55% 推到 62%：让"收拢"这一段占足 38% 的时间，
+            // 视觉上能清楚看到粒子从散云「吸」成文字，而不是炸开后仓促收尾。
             let PHASE = 0;
-            if (rawK > 0.15 && rawK < 0.55) PHASE = (rawK - 0.15) / 0.40;
-            else if (rawK >= 0.55) PHASE = 1 - (rawK - 0.55) / 0.45;
+            if (rawK > 0.12 && rawK < 0.62) PHASE = (rawK - 0.12) / 0.50;
+            else if (rawK >= 0.62) PHASE = 1 - (rawK - 0.62) / 0.38;
             PHASE = Math.max(0, Math.min(1, PHASE));
             const PHS = PHASE * PHASE * (3 - 2 * PHASE);      // smoothstep，起落更柔
 
@@ -2500,11 +2501,14 @@
                 (currentIsText && !currentIsFirework && rawK < 0.5) ||
                 (targetIsText  && !targetIsFirework  && rawK >= 0.5);
 
-            // 大过渡（≥1.2s，即星球→文字 / 文字→文字）才启用打散；爱心/星球这类 0.6s 的切换保持原样
-            const isBigMorph = (morphTransDur >= 1.2) && targetMorph !== currentMorph;
+            // 大过渡（≥1.0s，即所有进入文字态的切换）才启用打散；
+            // 爱心/星球这类 0.6s 的切换保持原样。
+            // 注意门槛别设成 1.2：烟花/树→文字已压到 1.1s，1.2 的门槛会让它丢掉打散效果。
+            const isBigMorph = (morphTransDur >= 1.0) && targetMorph !== currentMorph;
             const SWELL_ON  = isBigMorph ? 1 : 0;
             // 打散幅度：星球→文字给得大一些；文字→文字给中等（太小看不出"粒子在重组"）
-            const swellAmp = SWELL_ON ? (currentIsText && targetIsText ? 0.55 : 0.75) : 0;
+            // 时长压短后整体 +0.1，用更大的空间跨度补回"看得见"的力度
+            const swellAmp = SWELL_ON ? (currentIsText && targetIsText ? 0.65 : 0.85) : 0;
 
             // ====== 每粒子更新 ======
             // 真实烟花重力：更大让每射线末端明显下垂弯成弧线（参考图特征）
