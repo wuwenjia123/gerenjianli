@@ -441,7 +441,7 @@
             ☝️ <b>1根手指</b>: 粒子→「My friend」<br>
             ✌️ <b>2根手指</b>: 粒子→「天天开心」<br>
             🤙 <b>3根手指</b>: 粒子→「永远幸运」<br>
-            💕 <b>伸4根手指</b>: 聚合成爱心（食/中/无/小 四根全伸直 + 拇指内收；三四指混比不会触发）<br>
+            💕 <b>伸4根手指</b>: 聚合成爱心（食/中/无/小 四根必须全部伸直 + 拇指内收贴掌；二三指、或任一指没完全伸直都不会触发）<br>
             ✋ <b>五指全伸直</b>: 星球散开形态（拇指也要伸出去）<br>
         </div>
         <div id="gesture-status" class="status">等待手势...</div>
@@ -847,12 +847,12 @@
         // 以及"给定形态序列 → 切换几次"这两段是纯函数，必须可测，否则每次调阈值只能靠肉眼。
         try {
             window.__gestureTest = {
-                heart: function (ext, numExt, thumbExt, folded, maxRatio, thumbRatio) {
+                heart: function (ext, numExt, thumbExt, folded, maxRatio, thumbRatio, thumbNear) {
                     // 传一个 21 点的占位数组，只为通过"landmarks 完整性"防御检查；
                     // 判定本身只消费后面的统计量，不读点坐标。
                     var stub = [];
                     for (var i = 0; i < 21; i++) stub.push({ x: 0, y: 0, z: 0 });
-                    return detectHeartGesture(stub, ext, numExt, thumbExt, folded, maxRatio, thumbRatio);
+                    return detectHeartGesture(stub, ext, numExt, thumbExt, folded, maxRatio, thumbRatio, thumbNear);
                 },
                 resetMorph: function () {
                     _lastMorphSwitchAt = -1e9; _pendingMorph = null; _pendingFrames = 0; _morphSwitchCount = 0;
@@ -864,7 +864,39 @@
                 },
                 now: function () { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); },
                 MORPH: MORPH,
-                setTarget: function (m) { targetMorph = m; morphTransition = 0; }
+                setTarget: function (m) { targetMorph = m; morphTransition = 0; },
+                // 【几何钩子】给一组 21 点骨架，直接跑"手指判直"的同一套公式，返回统计量。
+                // 用途：用合成骨架（2直+2弯 / 3直+1弯 / 4直）验证判直逻辑，不必开摄像头。
+                // 公式与 onResults 内联的完全一致，若两处不一致说明被改坏了。
+                fingerStats: function (pts) {
+                    var fingerTips = [8, 12, 16, 20], fingerMCPs = [5, 9, 13, 17];
+                    var fingerPIPs = [6, 10, 14, 18], fingerDIPs = [7, 11, 15, 19];
+                    var w = pts[0];
+                    var ang = function (a, b, c) {
+                        var v1x = a.x - b.x, v1y = a.y - b.y, v2x = c.x - b.x, v2y = c.y - b.y;
+                        var n1 = Math.sqrt(v1x*v1x + v1y*v1y) || 1e-6, n2 = Math.sqrt(v2x*v2x + v2y*v2y) || 1e-6;
+                        var cs = Math.max(-1, Math.min(1, (v1x*v2x + v1y*v2y) / (n1 * n2)));
+                        return Math.acos(cs) * 180 / Math.PI;
+                    };
+                    var st = 0, fold = 0, mask = 0, maxRatio = 0, detail = [];
+                    for (var i = 0; i < 4; i++) {
+                        var tip = pts[fingerTips[i]], mcp = pts[fingerMCPs[i]];
+                        var pip = pts[fingerPIPs[i]], dip = pts[fingerDIPs[i]];
+                        var dT = Math.hypot(tip.x - w.x, tip.y - w.y);
+                        var dM = Math.hypot(mcp.x - w.x, mcp.y - w.y);
+                        var r = dM > 0 ? dT / dM : 0;
+                        if (r > maxRatio) maxRatio = r;
+                        var a1 = ang(w, mcp, pip), a2 = ang(mcp, pip, dip), a3 = ang(pip, dip, tip);
+                        var straight = (a1 >= 160) && (a2 >= 155) && (a3 >= 150);
+                        var bent = (a1 < 140) || (a2 < 120) || (a3 < 120);
+                        if (straight) { st++; mask |= (1 << i); }
+                        if (bent) fold++;
+                        detail.push({ i: i, mcp: Math.round(a1), pip: Math.round(a2), dip: Math.round(a3),
+                                      ratio: +r.toFixed(2), straight: straight, bent: bent });
+                    }
+                    return { straightCount: st, foldedCount: fold, straightMask: mask,
+                             maxExtendedRatio: +maxRatio.toFixed(3), fingers: detail };
+                }
             };
             // 【诊断钩子】暴露 hands 实例，方便在控制台/CDP 里直接排查 send 挂起问题
             window.__mpHands = function () { return hands; };
@@ -3631,10 +3663,10 @@
                     `cur: <b style="color:#9ae0ff">${debugState.currentMorph}</b> → tgt: <b style="color:#ffe58a">${debugState.targetMorph}</b><br>` +
                     `Err: ${debugState.lastError} | FWQ: ${fireworkSpawnQueue.length} | Blessed: ${lastBlessingCount ?? 0}(${blessingStableFrames ?? 0}/${BLESSING_STABLE_THRESHOLD})<br>` +
                     `SendErr: ${debugState.lastSendError ? ('<b style="color:#ff8a80">'+debugState.lastSendError+'</b>') : '—'}<br>` +
-                    `❤️Heart: 4指=${detectHeartGesture.debugTipDist}(目标4/4) | 直根数=${detectHeartGesture.debugPinchRatio}(≥4) | 最大直比=${detectHeartGesture.debugMidRatio}(≥1.30) | 拇指弯=${detectHeartGesture.debugFolded === 0 ? '是✅' : '否❌'} | 拇指比=${detectHeartGesture.debugThumbRatio ?? '—'}(≥1.15) | 判定=<b style="color:${detectHeartGesture.debugResult >= 2 ? '#ff6b9d' : (detectHeartGesture.debugResult === 1 ? '#ffe58a' : '#888')}">${detectHeartGesture.debugResult ?? 0}</b><br>` +
+                    `❤️Heart: 4指直=${detectHeartGesture.debugTipDist}(目标4/4) | 直根数=${detectHeartGesture.debugPinchRatio}(=4) | 最大直比=${detectHeartGesture.debugMidRatio}(≥1.25) | 拇指弯=${detectHeartGesture.debugFolded === 0 ? '是✅' : '否❌'} | 拇指比=${detectHeartGesture.debugThumbRatio ?? '—'}(≥0.88) | 拇指近食根=${detectHeartGesture.debugThumbNear ?? '—'}(<0.60) | 判定=<b style="color:${detectHeartGesture.debugResult >= 2 ? '#ff6b9d' : (detectHeartGesture.debugResult === 1 ? '#ffe58a' : '#888')}">${detectHeartGesture.debugResult ?? 0}</b><br>` +
                     `🎯Morph稳定器: 切换次数=${debugState._morphSwitchCount ?? 0} | 候选=${debugState._morphPending ?? '—'} | 冷却=${((typeof performance!=='undefined'?performance.now():Date.now()) - _lastMorphSwitchAt) < MORPH_COOLDOWN_MS ? '⏳' : '✅'}<br>` +
                     `🔧MP调度: busy=${mpSendBusy ? 'Y' : 'N'} | 重建次数=${debugState.mpRebuildCount ?? 0} | 连续超时=${mpSendStall} | 代数=${mpInstanceGeneration}${mpRebuilding ? ' | <b style="color:#ffb74d">重建中…</b>' : ''}<br>` +
-                    `📏fingers: folded=${debugState._foldedCount ?? '—'} | ext=${debugState._extendedCount ?? '—'} | numExt=${debugState._numExtended ?? '—'} | maxRatio=${debugState._maxExtendedRatio ?? '—'} | thumbExt=${debugState._thumbExtended ?? '—'}[A:${debugState._thumbRatio ?? '—'} B:${debugState._thumbAngleDeg ?? '—'}° C:${debugState._thumbTipNear ?? '—'}=${debugState._thumbExtABCRaw ?? '...'}] | open=${debugState._openAmountPct ?? '—'}% | pinchR=${debugState._pinchR ?? '—'} | CP=${debugState._clearlyPinching ?? '—'} | Strict=${debugState._openStrict ?? '—'}(${debugState._openConds ?? '-------'})<br>` +
+                    `📏fingers: 关角度=${debugState._fingerAngles ?? '—'} | mask=${debugState._straightMask ?? 0} | 直=${debugState._straightCount ?? '—'}/4 | folded=${debugState._foldedCount ?? '—'} | ext=${debugState._extendedCount ?? '—'} | numExt=${debugState._numExtended ?? '—'} | maxRatio=${debugState._maxExtendedRatio ?? '—'} | thumbExt=${debugState._thumbExtended ?? '—'}[A:${debugState._thumbRatio ?? '—'} B:${debugState._thumbAngleDeg ?? '—'}° C:${debugState._thumbTipNear ?? '—'}=${debugState._thumbExtABCRaw ?? '...'}] | open=${debugState._openAmountPct ?? '—'}% | pinchR=${debugState._pinchR ?? '—'} | CP=${debugState._clearlyPinching ?? '—'} | Strict=${debugState._openStrict ?? '—'}(${debugState._openConds ?? '-------'})<br>` +
                     `🔄Rotation: 基速=${debugState._rotBase ?? '—'} 手控=${debugState._rotHand ?? '—'} 总速=${debugState._rotTotal ?? '—'} rad/s | yaw=${debugState._rotY ?? '—'} | handΔx(raw=${(debugState._handDxRaw||0).toFixed(4)} smooth=${(debugState._handDxSmoothed||0).toFixed(4)} ${debugState._hasHandThisFrame?'👋🏼':'⚪️'})<br>` +
                     `JS: ${debugState.lastJsError}`;
 
@@ -3654,24 +3686,24 @@
         const previewCtx = previewCanvas.getContext('2d');
 
         // 爱心手势检测
-        // 【返回值】0 = 不是爱心；1 = 弱证据爱心；2 = 强证据爱心（4指全弯=真·四指爱心）
-        // 【2026-11-11 修复"三指被误判成爱心"】旧条件 `folded===0 && ext===4` 只要求食/中/无/小
-        //   四根"没有弯"（dTip >= dMcp*1.15）。三根手指伸出时，那根收起的手指往往只是"没明显弯"，
-        //   仍被算进 folded=0 → ext=4 → 加上 numExt=3 恰好卡在 `numExt<3` 的边界外通过，
-        //   于是"三根手指"直接落进爱心。现在两个方向同时堵死：
-        //   (a) 加严：除大拇外四指全部明显伸直 numExt===4 且 maxRatio>=1.30（4指爱心必须四根都立起来）
-        //   (b) 加"4指含拇指"结构约束：拇指自身也要有明显长度（比例>=1.15），
-        //       否则就是"拇指贴掌心 + 三四根手指"的松散手型，不是爱心
-        function detectHeartGesture(landmarks, /* 附加来自onResults的已有计算结果，避免重复算 */ _ext, _numExt, _thumbExt, _folded, _maxRatio, _thumbRatio) {
-            // ===== 【爱心手势重定义：伸4根手指】食/中/无/小 4指伸直 + 拇指弯曲 =====
-            // 与"五指张开（5指全伸=星球）"互斥：拇指必须是弯的（不是伸直状态）
-            // 与"1/2/3指祝福词"互斥：extendedCount必须正好=4
+        // 【返回值】0 = 不是爱心；1 = 弱证据爱心；2 = 强证据爱心
+        // 【2026-11-11 第二次重构 · 根因：两三根手指被送进爱心】
+        //   上一版仍靠 foldedCount/numExtended 判，而这两个数来自 "Tip/Wrist 距离比"。
+        //   手指侧对镜头 / 自遮挡时，收起的指尖坐标常被预测到"还在指根外圈"，dTip 依然 > dMcp，
+        //   于是 folded=0、ext=4 —— 截图里 folded=0/ext=4/numExt=4 却只有两三根手指就是这个原因。
+        //   现在改为传关节角判定结果 _straightCount / _straightMask：
+        //   爱心要求 4 根手指的 MCP/PIP/DIP 三个关节角全部"判直"（straightCount===4），
+        //   任一手指处于过渡态（半伸半屈）都直接不成立，2 指 3 指手型天然被挡在外面。
+        // 【额外的拇指几何兜底】_thumbNearIndexMCP（拇指尖到食根 / 掌宽）必须 < 0.55：
+        //   比心时拇指是内收贴在食指根侧的，这个值天然很小；五指张开或拇食分开时这个值 > 0.75。
+        function detectHeartGesture(landmarks, _ext, _numExt, _thumbExt, _folded, _maxRatio, _thumbRatio, _thumbNear) {
             // 参数说明（都是 onResults 里已经算过的，传进来避免重算）：
-            //   _ext = extendedCount（"不弯"的根数，foldedCount=4-_ext）
-            //   _numExt = numExtended（明显伸直>1.25的根数）
-            //   _thumbExt = thumbExtended（拇指是否伸直）
-            //   _folded = foldedCount（弯的根数）
-            //   _maxRatio = maxExtendedRatio（4指中 (Tip/Wrist)/(MCP/Wrist) 最大值）
+            //   _ext       = extendedCount（关节角判直的根数，0~4）
+            //   _numExt    = numExtended（与 _ext 同值，保留兼容）
+            //   _thumbExt  = thumbExtended（拇指是否伸直）
+            //   _folded    = foldedCount（明确折叠的根数）
+            //   _maxRatio  = maxExtendedRatio（4指中 (Tip/Wrist)/(MCP/Wrist) 最大值，仅作辅助）
+            //   _thumbNear = 拇指尖到食指根距离 / 掌宽
             // -------- 防御：landmarks 不完整直接 false --------
             if (!Array.isArray(landmarks) || landmarks.length < 21) {
                 detectHeartGesture.debugTipDist = "---";
@@ -3682,46 +3714,43 @@
                 return 0;
             }
             const ext = typeof _ext === 'number' ? _ext : -1;
-            const folded = typeof _folded === 'number' ? _folded : -1;
             const numExt = typeof _numExt === 'number' ? _numExt : -1;
             const thumbExt = !!_thumbExt;
             const maxRatio = typeof _maxRatio === 'number' ? _maxRatio : 0;
+            const thumbNear = typeof _thumbNear === 'number' ? _thumbNear : 999;
 
-            // 调试值：沿用原有 debug 字段名（debug面板在用），内容改成 4指 相关语义
-            // ❤️Heart 行格式：tip=ext/4(4指伸直根数) | pinchR=numExt(明显直根数) | midR=maxRatio(最大伸直比) | fold=thumbExt(0=拇指弯=符合;1=拇指直=5指张开)
-            detectHeartGesture.debugTipDist = `${ext}/4`;      // 4指不弯根数/目标4
-            detectHeartGesture.debugPinchRatio = `${numExt}`;  // 明显伸直根数
+            // 调试值：沿用原有 debug 字段名（debug面板在用）
+            detectHeartGesture.debugTipDist = `${ext}/4`;      // 4指关节角判直根数/目标4
+            detectHeartGesture.debugPinchRatio = `${numExt}`;  // 同上（兼容旧字段）
             detectHeartGesture.debugMidRatio = maxRatio ? maxRatio.toFixed(2) : "0.00";
             detectHeartGesture.debugFolded = thumbExt ? 1 : 0;  // 0=拇指弯=爱心符合；1=拇指直=要排除（是5指张开）
 
             const thumbRatio = (typeof _thumbRatio === 'number') ? _thumbRatio : 0;
             detectHeartGesture.debugThumbRatio = thumbRatio ? thumbRatio.toFixed(2) : "0.00";
+            detectHeartGesture.debugThumbNear = (thumbNear === 999) ? "---" : thumbNear.toFixed(2);
             detectHeartGesture.debugResult = 0;
 
-            // ===== 条件1：食/中/无/小 4指必须"都不弯"（foldedCount === 0 且 extendedCount === 4）=====
-            // foldedCount 是 onResults 里用 Tip < MCP*1.15 判"弯"的根数；extendedCount 是"不弯"的根数（恒=4-foldedCount）
-            if (folded !== 0 || ext !== 4) return 0;
+            // ===== 条件1：食/中/无/小 四根必须"关节角全部判直"（ext === 4）=====
+            if (ext !== 4) return 0;
+            if (numExt !== 4) return 0;
 
-            // ===== 条件2：四根必须"全都明显伸直"（numExt === 4），不再容忍 3 根 =====
-            // 【本次修复核心】旧版 numExt < 3 才拦，numExt=3 直接通过 —— 这正是"三指出爱心"的入口。
-            // 真·四指爱心（食/中/无/小立起）四根都会明显伸长，要求 4 根全通过不会误伤，
-            // 但会把"三根立起 + 一根半收"的过渡手型挡在外面。
-            if (numExt < 4) return 0;
-            if (maxRatio < 1.30) return 0;
+            // ===== 条件2：辅助确认"真的伸出去"（避免关节角卡在阈值边缘的手型）=====
+            if (maxRatio < 1.25) return 0;
 
             // ===== 条件3：拇指必须是弯曲状态（排除"五指张开=星球形态"）=====
-            // 这是 4指(爱心) vs 5指(张开) 的唯一核心区分：拇指弯=4指；拇指直=5指张开
-            // 用 onResults 传进来的 thumbExtended（false=弯）
             if (thumbExt) return 0;
 
-            // ===== 条件4：【4指含拇指】拇指自身也得有一定长度 =====
-            // 拇指完全贴死掌心（捏进拳头里）时 thumbRatio 通常 < 1.1，
-            // 那种手型是"收着大拇指"而不是"比心"，判定为不成立。
-            if (thumbRatio > 0 && thumbRatio < 1.15) return 0;
+            // ===== 条件4：拇指尖必须贴近食指根（比心时拇指内收贴掌；张开/分离时远离）=====
+            if (thumbNear >= 0.60) return 0;
 
-            // 走到这里：4指全伸直 + 拇指弯且仍有长度 → 爱心成立
-            // 强证据（可打断冷却）：最大伸直比 >= 1.30 且拇指弯得明确（ratio 1.15~1.45 之间说明拇指是"收着"而不是"逃逸")
-            const isStrong = (maxRatio >= 1.30) && (numExt >= 4);
+            // ===== 条件5：拇指不能被完全折叠压进掌心 =====
+            // 【2026-11-11 实测校准】原阈值 1.12 过严：真实比心时拇指内收贴掌，
+            // thumbRatio 常落在 0.95~1.10 区间，会被误杀成"握拳"。
+            // 合成骨架实测 0.95 → 收紧到 0.88，只挡"拇指彻底缩死不动"的极端情况。
+            if (thumbRatio > 0 && thumbRatio < 0.88) return 0;
+
+            // 走到这里：4指关节角全直 + 拇指弯且内收贴掌 → 爱心成立
+            const isStrong = (maxRatio >= 1.30) && (thumbNear < 0.50);
             detectHeartGesture.debugResult = isStrong ? 2 : 1;
             return isStrong ? 2 : 1;
         }
@@ -3730,6 +3759,7 @@
         detectHeartGesture.debugFolded = 0;
         detectHeartGesture.debugMidRatio = "---";
         detectHeartGesture.debugThumbRatio = "---";
+        detectHeartGesture.debugThumbNear = "---";
         detectHeartGesture.debugResult = 0;
 
         function onResults(results) {
@@ -3903,6 +3933,8 @@
                 
                 const fingerTips = [8, 12, 16, 20]; // 食指到小指尖
                 const fingerMCPs = [5, 9, 13, 17];  // 食指到小指根
+                const fingerPIPs = [6, 10, 14, 18]; // 近端指间关节（第一关节）
+                const fingerDIPs = [7, 11, 15, 19]; // 远端指间关节（第二关节）
                 
                 // 计算手掌大小（食指根到小指根的距离作为参考）
                 const palmSize = Math.sqrt(
@@ -3949,26 +3981,70 @@
                 let totalTipDist = 0;
                 let foldedCount = 0;
                 let maxExtendedRatio = 0;   // 除拇指外所有手指中，(dTip/dMcp) 的最大值（用于区分"微翘/明显伸"）
-                let numExtended = 0;         // 除拇指外明显伸直(>1.25*dMcp) 的根数
+                let numExtended = 0;         // 除拇指外明显伸直(mcpAngle>=150且dipAngle>=150) 的根数
 
                 const distSq2 = (p1, p2) => (p1.x - p2.x)**2 + (p1.y - p2.y)**2;
 
-                for (let i = 0; i < 4; i++) {
-                    const dTip = Math.sqrt(distSq2(landmarks[fingerTips[i]], wrist));
-                    const dMcp = Math.sqrt(distSq2(landmarks[fingerMCPs[i]], wrist));
+                // ===== 【2026-11-11 核心修复 · 两三手指总被判成四指】=====
+                // 旧算法：dTip < dMcp*1.15 → 判"弯"，否则算"不弯"。
+                // 问题：手指侧对镜头/自遮挡时，MediaPipe 预测的指尖常常"还在指根外圈"，
+                //      dTip 依然大于 dMcp → 收起的手指被算成 folded=0、ext=4 → 两指三指被送进爱心判定。
+                // 新算法：改用关节夹角（MediaPipe 官方手势判定的标准做法），与 Tip/Wrist 距离无关：
+                //   mcpAngle = ∠(腕-MCP-PIP)     —— 手指从指根起是否朝前伸展
+                //   pipAngle = ∠(MCP-PIP-DIP)    —— 第一关节是否折叠
+                //   dipAngle = ∠(PIP-DIP-TIP)    —— 第二关节是否折叠
+                // 伸直：mcpAngle>=160 且 pipAngle>=155 且 dipAngle>=150
+                // 弯曲：mcpAngle<140 或 pipAngle<120 或 dipAngle<120（任一关节明显折叠）
+                // 中间区间（半伸半屈）既不算伸展也不算弯曲 —— 这种"过渡手型"绝不能触发爱心，
+                // 由下方的 numExtended/straightCount 决定它进不了爱心分支（爱心要求 straightCount===4）。
+                const angleAt = (a, b, c) => {
+                    const v1x = a.x - b.x, v1y = a.y - b.y;
+                    const v2x = c.x - b.x, v2y = c.y - b.y;
+                    const n1 = Math.sqrt(v1x*v1x + v1y*v1y) || 1e-6;
+                    const n2 = Math.sqrt(v2x*v2x + v2y*v2y) || 1e-6;
+                    const cs = Math.max(-1, Math.min(1, (v1x*v2x + v1y*v2y) / (n1 * n2)));
+                    return Math.acos(cs) * 180 / Math.PI;
+                };
 
+                let straightCount = 0;       // 4指中关节角全部通过"伸直"的根数（爱心要求 ===4）
+                let straightMask = 0;        // 位掩码：bit0=食 bit1=中 bit2=无 bit3=小，1=伸直
+                let fingerAnglesDbg = '';    // 调试用：每根手指的 mcp/pip/dip 角度
+
+                for (let i = 0; i < 4; i++) {
+                    const tip = landmarks[fingerTips[i]];
+                    const mcp = landmarks[fingerMCPs[i]];
+                    const pip = landmarks[fingerPIPs[i]];
+                    const dip = landmarks[fingerDIPs[i]];
+
+                    const dTip = Math.sqrt(distSq2(tip, wrist));
+                    const dMcp = Math.sqrt(distSq2(mcp, wrist));
                     totalTipDist += dTip;
 
+                    // 比例只作为辅助证据（debug 展示 + 强证据的补充），不再用于 primary 判弯
                     const ratio = (dMcp > 0) ? (dTip / dMcp) : 0;
                     if (ratio > maxExtendedRatio) maxExtendedRatio = ratio;
 
-                    // 如果指尖比指根离手腕更近，或者非常接近，判定为弯曲
-                    if (dTip < dMcp * 1.15) {
-                        foldedCount++;
-                    } else if (ratio > 1.25) {
+                    const mcpAngle = angleAt(wrist, mcp, pip);
+                    const pipAngle = angleAt(mcp, pip, dip);
+                    const dipAngle = angleAt(pip, dip, tip);
+
+                    const isStraight = (mcpAngle >= 160) && (pipAngle >= 155) && (dipAngle >= 150);
+                    const isBent = (mcpAngle < 140) || (pipAngle < 120) || (dipAngle < 120);
+
+                    if (isStraight) {
+                        straightCount++;
+                        straightMask |= (1 << i);
                         numExtended++;
                     }
+                    if (isBent) foldedCount++;
+                    // 既不直也不弯（过渡态）：不计 folded、不计 straight —— 天然挡住伪爱心
+
+                    fingerAnglesDbg += `${i}:${Math.round(mcpAngle)}/${Math.round(pipAngle)}/${Math.round(dipAngle)}${isStraight?'▲':(isBent?'▼':'·')} `;
                 }
+
+                debugState._fingerAngles = fingerAnglesDbg.trim();
+                debugState._straightMask = straightMask;
+                debugState._straightCount = straightCount;
                 
                 // 平均指尖距离（归一化到手掌大小）
                 const avgTipDist = (totalTipDist / 4) / palmSize;
@@ -3979,7 +4055,9 @@
                 openAmount = Math.max(0, Math.min(1, openAmount));
 
                 // 伸出的手指数（仅统计：食指/中指/无名指/小指 4根）
-                const extendedCount = 4 - foldedCount;
+                // 【2026-11-11】改成"关节角判直"的 straightCount：过渡手型（半伸半屈）不计入，
+                // 避免 2 根直 + 1 根半伸 被算成 3 根。这是"两三指识别出错"的关键。
+                const extendedCount = straightCount;
 
                 // ===== 4. 判断「竖大拇指」手势：拇指伸直向上 + 其他4指全弯曲（宽松容错）=====
                 const thumbTip = landmarks[4];  // 拇指指尖
@@ -4024,9 +4102,10 @@
                 const thumbUpVector = thumbVecY < -0.004;
                 // 其他4指：
                 //   - foldedCount >= 3：允许1指微翘（容错）
-                //   - 但如果 有≥1根手指"明显伸"（numExtended>=1 且 maxExtendedRatio>1.35），不算竖大拇指，
-                //     交给后面的 1指/2指 祝福词分支处理，避免抢占。
-                const otherFingersAllFolded = (foldedCount >= 3) && !(numExtended >= 1 && maxExtendedRatio > 1.35);
+                //   - 但只要有 1 根"关节角判直"，就不算竖大拇指（交给 1/2/3 指祝福词分支，避免抢占）
+                // 【2026-11-11】原来用 maxExtendedRatio>1.35 兜底，距离法在侧面手型下不可靠；
+                //   现改为 straightCount===0，与主判定同口径。
+                const otherFingersAllFolded = (foldedCount >= 3) && (straightCount === 0);
                 const isThumbsUp = otherFingersAllFolded && thumbExtended && (thumbPointingUp || thumbLineUp || thumbUpVector);
 
                 // ===== 【提前计算：拇食捏合通用参数（供张开/爱心/OK 三处复用，避免重复计算）】=====
@@ -4049,9 +4128,9 @@
                 //   ③ 拇指缩着但其他手指伸（不是五指张开 → 现改为4指爱心，拇指贴掌心会被误判为张开）
                 //   ④ 张开度<50% 的松散状态（手刚抬起来就被误判为张开））
                 // 严格张开需要 7 个条件同时满足 + 1个反向排除：
-                const openCond1 = (foldedCount === 0);                        // (1) 4指都"不弯"（弯曲判定基础）
-                const openCond2 = (numExtended === 4);                       // (2) 4指都"明显伸"（不是刚好擦过不弯阈值）
-                const openCond3 = (maxExtendedRatio > 1.30);                 // (3) 至少1根手指伸得很直（至少( tip/Mcp )>=1.3）
+                const openCond1 = (foldedCount === 0);                        // (1) 4指都"没有折叠"
+                const openCond2 = (straightCount === 4);                     // (2) 4指关节角全部判直（不再是距离比）
+                const openCond3 = (maxExtendedRatio > 1.30);                 // (3) 辅助：至少1根手指伸得很长（tip/mcp>=1.3）
                 // (4) 拇指也要"真伸直"（不能只是 ratio>1.20 就通过，必须同时满足A/B/C：
                 //      ratio>1.30 + 三点夹角>160° + 拇指尖远离食根>0.75掌宽）
                 //     这就杜绝了"4指拇指贴掌心被判伸直→4指被当成5张开"的串扰
@@ -4074,7 +4153,10 @@
                 const _thumbBentByGeometry = (thumbTipNearIndexMCP < 0.55);  // 几何兜底：距离判定"实际是否弯"
                 const _heartThumbExt = (_thumbBentByGeometry ? false : thumbExtended);
                 // 返回 0/1/2（0=非爱心，1=弱证据，2=强证据）
-                const heartScore = detectHeartGesture(landmarks, extendedCount, numExtended, _heartThumbExt, foldedCount, maxExtendedRatio, thumbRatio);
+                // 【2026-11-11】第 8 个参数 thumbTipNearIndexMCP 是关键新增证据：
+                //   比心时拇指内收贴掌，该值 < 0.5；五指张开/拇食分离时 > 0.75。
+                //   这比"拇指是否伸直"更稳，能挡住"三四根手指 + 拇指乱飞"的伪爱心。
+                const heartScore = detectHeartGesture(landmarks, extendedCount, straightCount, _heartThumbExt, foldedCount, maxExtendedRatio, thumbRatio, thumbTipNearIndexMCP);
                 let isHeartGesture = (heartScore > 0);
 
                 // 存到debugState，在animate调试面板中可见（避免animate中访问onResults局部变量抛ReferenceError）
