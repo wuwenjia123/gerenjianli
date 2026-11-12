@@ -2016,6 +2016,18 @@
     /* 显式覆盖通用 hover 提亮，避免亮底图把白字吃掉（同优先级，靠后生效） */
     .entry-card--tech-viz:hover .entry-card-bg { filter: saturate(1.14) contrast(1.08) brightness(0.72); }
 
+    /* 05 · 动态海报设计（朱红国潮底：竖构图裁切会在左右留出大片空底，背景压得更暗才不抢标题） */
+    .entry-card--tech-poster .entry-card-overlay {
+      background:
+        radial-gradient(120% 90% at 82% 18%, rgba(190,36,36,0.26) 0%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.9) 100%),
+        linear-gradient(180deg, rgba(7,9,15,0.30) 0%, rgba(7,9,15,0.22) 34%, rgba(7,9,15,0.70) 100%);
+    }
+    .entry-card--tech-poster .entry-card-bg {
+      filter: saturate(1.02) contrast(1.02) brightness(0.46);
+      background-position: center 46%;
+    }
+    .entry-card--tech-poster:hover .entry-card-bg { filter: saturate(1.1) contrast(1.06) brightness(0.56); }
+
     /* 左右箭头（桌面端辅助） */
     .entry-nav {
       position: absolute;
@@ -2063,7 +2075,7 @@
       z-index: 10;
     }
     .entry-vine {
-      width: 200px;
+      width: 250px;
       height: auto;
       overflow: visible;
     }
@@ -4013,6 +4025,176 @@
       .viz-cta-btn { width: 100%; justify-content: center; padding: 0.8rem 1.2rem; font-size: 0.9rem; }
     }
 
+    /* ==================================================================
+       动态海报设计 · 义乌小商品 × 新国潮（4 支竖屏动态海报，9:16）
+       海报本体是朱红国潮调，与本站墨绿刻意区分——作为「作品」原样呈现；
+       外壳（卡片 / 标签 / 说明）仍走墨绿体系，保证整站统一。
+       ================================================================== */
+    .poster-lead {
+      max-width: 66ch;
+      margin: -0.35rem 0 1.35rem;
+      font-size: 1rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      text-align: justify;
+      text-justify: inter-ideograph;
+    }
+    .poster-lead b { color: var(--text-primary); font-weight: 700; }
+
+    .poster-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1.15rem;
+    }
+    .poster-item {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background: #FFFFFF;
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-2xl);
+      padding: 0.7rem 0.7rem 0.85rem;
+      box-shadow: var(--shadow-card);
+      transition: transform var(--dur-base) var(--ease-out-expo),
+                  box-shadow var(--dur-base) var(--ease-out-expo),
+                  border-color var(--dur-base) ease;
+    }
+    .poster-item:hover {
+      transform: translateY(-4px);
+      border-color: rgba(47,107,79,0.45);
+      box-shadow: var(--shadow-lift), var(--shadow-primary);
+    }
+
+    /* 9:16 竖屏画框 */
+    .poster-frame {
+      position: relative;
+      aspect-ratio: 9 / 16;
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      background: #1A0E0E url('dongtaijianbao/img/jz.webp') center/cover no-repeat;
+      cursor: pointer;
+      isolation: isolate;
+    }
+    .poster-frame video {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #1A0E0E;
+    }
+    /* 播完定格后再点才有意义：盖一层轻提示 */
+    .poster-frame::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0) 62%, rgba(0,0,0,0.5) 100%);
+      opacity: 1;
+      transition: opacity var(--dur-base) ease;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .poster-item.is-playing .poster-frame::after { opacity: 0; }
+
+    .poster-play {
+      position: absolute;
+      right: 0.55rem;
+      bottom: 0.55rem;
+      z-index: 2;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.55);
+      background: rgba(12,16,14,0.42);
+      backdrop-filter: var(--glass-blur-sm);
+      -webkit-backdrop-filter: var(--glass-blur-sm);
+      color: #fff;
+      cursor: pointer;
+      transition: background var(--dur-base) ease, transform var(--dur-base) var(--ease-out-expo);
+    }
+    .poster-play:hover { background: rgba(47,107,79,0.78); transform: scale(1.08); }
+    .poster-play svg { width: 16px; height: 16px; display: block; }
+    .poster-item.is-playing .poster-play { opacity: 0.35; }
+    .poster-play .ico-play  { display: block; }
+    .poster-play .ico-pause { display: none; }
+    .poster-item.is-playing .ico-play  { display: none; }
+    .poster-item.is-playing .ico-pause { display: block; }
+
+    .poster-idx {
+      position: absolute;
+      left: 0.55rem;
+      top: 0.55rem;
+      z-index: 2;
+      font-family: var(--font-mono);
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(12,16,14,0.42);
+      backdrop-filter: var(--glass-blur-sm);
+      -webkit-backdrop-filter: var(--glass-blur-sm);
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+
+    .poster-meta {
+      padding: 0.7rem 0.25rem 0;
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+    }
+    .poster-name {
+      font-size: 1.02rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      color: var(--text-primary);
+    }
+    .poster-sub {
+      margin-top: 0.22rem;
+      font-size: 0.78rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+    }
+    .poster-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: auto;
+      padding-top: 0.6rem;
+    }
+    .poster-tag {
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-primary);
+      padding: 3px 8px;
+      border-radius: var(--r-sm);
+      background: rgba(47,107,79,0.08);
+      border: 1px solid rgba(47,107,79,0.22);
+      white-space: nowrap;
+    }
+
+    .poster-note {
+      margin-top: 1.2rem;
+      font-size: 0.78rem;
+      line-height: 1.75;
+      color: var(--text-tertiary);
+      text-align: center;
+    }
+
+    @media (max-width: 1099.98px) {
+      .poster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px) {
+      .poster-grid { grid-template-columns: 1fr; max-width: 340px; margin: 0 auto; }
+      .poster-play { width: 34px; height: 34px; }
+    }
+
     /* ============ 应用开发板块已移除 ============ */
 </style>
 <noscript><style>.reveal{opacity:1!important;transform:none!important;animation:none!important}</style></noscript>
@@ -4195,6 +4377,25 @@
           打开数据图志 <span class="entry-card-arrow" aria-hidden="true">→</span>
         </div>
       </a>
+
+      <!-- 05 · 动态海报设计（国潮朱红：义乌小商品 × 新国潮，四支竖屏动态海报） -->
+      <a class="entry-card entry-card--tech-poster" href="#posterSection" data-target="#posterSection">
+        <div class="entry-card-bg" style="background-image:url('dongtaijianbao/img/xj.webp');"></div>
+        <div class="entry-card-grid"></div>
+        <div class="entry-card-mask"></div>
+        <div class="entry-card-overlay"></div>
+        <div class="entry-card-top">
+          <span class="entry-card-idx-square"></span>
+          <span class="entry-card-idx">05</span>
+          <span class="entry-card-cat">/ 动态海报设计</span>
+        </div>
+        <div class="entry-card-title">
+          <span>动态海报<br/>设计</span>
+        </div>
+        <div class="entry-card-cta">
+          播放动态海报 <span class="entry-card-arrow" aria-hidden="true">→</span>
+        </div>
+      </a>
     </div>
 
     <!-- 左右箭头（桌面端辅助切屏） -->
@@ -4202,9 +4403,9 @@
     <button class="entry-nav entry-nav-next" id="entryNavNext" aria-label="下一屏">›</button>
     <!-- 底部进度指示 · 绿色藤蔓（进度生长）+ 四朵等距小雏菊 -->
     <div class="entry-scroll-indicator" id="entryScrollIndicator" aria-hidden="true">
-      <svg class="entry-vine" viewBox="0 0 200 48" preserveAspectRatio="xMidYMid meet">
-        <path id="vinePathBg" class="vine-stem vine-stem-bg" d="M25 30 C 42 14, 58 46, 75 30 C 92 46, 108 14, 125 30 C 142 14, 158 46, 175 30"/>
-        <path id="vinePathFg" class="vine-stem vine-stem-fg" d="M25 30 C 42 14, 58 46, 75 30 C 92 46, 108 14, 125 30 C 142 14, 158 46, 175 30"/>
+      <svg class="entry-vine" viewBox="0 0 250 48" preserveAspectRatio="xMidYMid meet">
+        <path id="vinePathBg" class="vine-stem vine-stem-bg" d="M25 30 C 42 14, 58 46, 75 30 C 92 46, 108 14, 125 30 C 142 14, 158 46, 175 30 C 192 46, 208 14, 225 30"/>
+        <path id="vinePathFg" class="vine-stem vine-stem-fg" d="M25 30 C 42 14, 58 46, 75 30 C 92 46, 108 14, 125 30 C 142 14, 158 46, 175 30 C 192 46, 208 14, 225 30"/>
         <g class="entry-scroll-dot is-active" data-idx="0" transform="translate(25,30)">
           <circle class="vine-hit" r="15"/>
           <g class="daisy">
@@ -4254,6 +4455,22 @@
           </g>
         </g>
         <g class="entry-scroll-dot" data-idx="3" transform="translate(175,30)">
+          <circle class="vine-hit" r="15"/>
+          <g class="daisy">
+            <g class="daisy-petals">
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(45)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(90)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(135)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(180)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(225)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(270)"/>
+              <ellipse class="daisy-petal" cx="0" cy="-6" rx="2.1" ry="4.2" transform="rotate(315)"/>
+            </g>
+            <circle class="daisy-core" cx="0" cy="0" r="3.1"/>
+          </g>
+        </g>
+        <g class="entry-scroll-dot" data-idx="4" transform="translate(225,30)">
           <circle class="vine-hit" r="15"/>
           <g class="daisy">
             <g class="daisy-petals">
@@ -4482,6 +4699,102 @@
         数据来源：联合国经济和社会事务部人口司《World Population Prospects 2024》中位情景<br>
         单文件 HTML · 原生 SVG 绘图 · 零外部依赖，可离线打开
       </div>
+    </div>
+  </section>
+
+  <!-- 动态海报设计 · 义乌小商品 × 新国潮（4 支竖屏动态海报） -->
+  <section class="section reveal reveal-delay-8" id="posterSection">
+    <div class="ai-practice-header">
+      <div class="ppt-header-tag">
+        <span class="ppt-header-square"></span>
+        <span class="ppt-header-tag-text">MOTION POSTER // 动态海报设计</span>
+      </div>
+      <div class="ai-practice-title">
+        潮起义乌，万象新生<span class="ai-practice-title-dot">。</span>
+      </div>
+    </div>
+
+    <p class="poster-lead">
+      以义乌小商品为母题的一组<b>竖屏动态海报</b>：剪纸、团扇、漆器、宋锦香囊四件非遗手作，各自走一条从「工艺本体」到「国潮定版」的动线。<b>四条片子共用同一套朱红＋金箔的版式基因</b>，动起来是四种节奏，停下来是同一张家族脸。
+    </p>
+
+    <div class="poster-grid" id="posterGrid">
+      <!-- 01 · 剪纸货物 -->
+      <figure class="poster-item">
+        <div class="poster-frame">
+          <video src="dongtaijianbao/video/jz.mp4" poster="dongtaijianbao/img/jz.webp"
+                 muted loop playsinline preload="none" disablepictureinpicture></video>
+          <span class="poster-idx">01</span>
+          <button class="poster-play" type="button" aria-label="播放 / 暂停 剪纸货物">
+            <svg class="ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+            <svg class="ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.2v14H7zM13.8 5H17v14h-3.2z"/></svg>
+          </button>
+        </div>
+        <figcaption class="poster-meta">
+          <div class="poster-name">剪纸货物</div>
+          <div class="poster-sub">一剪万象，货通天下 —— 剪纸层叠出义乌商贸城与全球物流网</div>
+          <div class="poster-tags"><span class="poster-tag">纸雕</span><span class="poster-tag">11s</span></div>
+        </figcaption>
+      </figure>
+
+      <!-- 02 · 迷你团扇 -->
+      <figure class="poster-item">
+        <div class="poster-frame">
+          <video src="dongtaijianbao/video/tf.mp4" poster="dongtaijianbao/img/tf.webp"
+                 muted loop playsinline preload="none" disablepictureinpicture></video>
+          <span class="poster-idx">02</span>
+          <button class="poster-play" type="button" aria-label="播放 / 暂停 迷你团扇">
+            <svg class="ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+            <svg class="ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.2v14H7zM13.8 5H17v14h-3.2z"/></svg>
+          </button>
+        </div>
+        <figcaption class="poster-meta">
+          <div class="poster-name">迷你团扇</div>
+          <div class="poster-sub">小商品，新国潮 —— 红绸横穿画幅，团扇与漆盒从帘后亮相</div>
+          <div class="poster-tags"><span class="poster-tag">红绸运镜</span><span class="poster-tag">14s</span></div>
+        </figcaption>
+      </figure>
+
+      <!-- 03 · 漆器 -->
+      <figure class="poster-item">
+        <div class="poster-frame">
+          <video src="dongtaijianbao/video/qq.mp4" poster="dongtaijianbao/img/qq.webp"
+                 muted loop playsinline preload="none" disablepictureinpicture></video>
+          <span class="poster-idx">03</span>
+          <button class="poster-play" type="button" aria-label="播放 / 暂停 漆器">
+            <svg class="ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+            <svg class="ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.2v14H7zM13.8 5H17v14h-3.2z"/></svg>
+          </button>
+        </div>
+        <figcaption class="poster-meta">
+          <div class="poster-name">漆器</div>
+          <div class="poster-sub">青瓷茶杯，凤舞九天 —— 墨蓝夜色里金凤展翼，热气袅袅升起</div>
+          <div class="poster-tags"><span class="poster-tag">青瓷</span><span class="poster-tag">10s</span></div>
+        </figcaption>
+      </figure>
+
+      <!-- 04 · 宋锦香囊 -->
+      <figure class="poster-item">
+        <div class="poster-frame">
+          <video src="dongtaijianbao/video/xj.mp4" poster="dongtaijianbao/img/xj.webp"
+                 muted loop playsinline preload="none" disablepictureinpicture></video>
+          <span class="poster-idx">04</span>
+          <button class="poster-play" type="button" aria-label="播放 / 暂停 宋锦香囊">
+            <svg class="ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+            <svg class="ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.2v14H7zM13.8 5H17v14h-3.2z"/></svg>
+          </button>
+        </div>
+        <figcaption class="poster-meta">
+          <div class="poster-name">宋锦香囊</div>
+          <div class="poster-sub">把福禄带在身边 —— 葫芦香囊自锦线中垂落，流苏轻晃</div>
+          <div class="poster-tags"><span class="poster-tag">宋锦</span><span class="poster-tag">8s</span></div>
+        </figcaption>
+      </figure>
+    </div>
+
+    <div class="poster-note">
+      四支竖屏 720×1280 · H.264 无声循环 · 总时长 47 秒<br>
+      产品创新类动态海报竞赛作品 · 潮起义乌，万象新生 · 经亨颐教育学院 小教262
     </div>
   </section>
 
@@ -6062,6 +6375,102 @@ const card = document.createElement('div');
       if (!autoRAF) autoTick();
     })();
   })();
+
+    /* ============ 动态海报 · 播放控制（点一下才开始；悬停自动静音预览，同屏只放一支） ============ */
+    (function initPosterGallery() {
+      const grid = document.getElementById('posterGrid');
+      if (!grid) return;
+      const items = Array.from(grid.querySelectorAll('.poster-item'));
+      if (!items.length) return;
+
+      const HOVER_PREVIEW = !window.matchMedia('(pointer: coarse)').matches
+                         && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function setPlaying(item, on) {
+        item.classList.toggle('is-playing', on);
+        const btn = item.querySelector('.poster-play');
+        if (btn) btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+
+      // 只留 except 这一支，其它一律停（并复位到静音）
+      function pauseAll(except) {
+        items.forEach(function (it) {
+          if (it === except) return;
+          const v = it.querySelector('video');
+          if (!v) return;
+          if (!v.paused) v.pause();
+          if (!v.dataset.audio) v.muted = true;
+          setPlaying(it, false);
+        });
+      }
+
+      function start(item, withAudio) {
+        const video = item.querySelector('video');
+        if (!video) return;
+        pauseAll(item);
+        video.muted = !withAudio;
+        if (withAudio) video.dataset.audio = '1'; else delete video.dataset.audio;
+        // preload=none 的片子首次播放才真正去拉文件
+        if (!video.dataset.started) { video.preload = 'auto'; video.dataset.started = '1'; }
+        const p = video.play();
+        if (p && p.catch) p.catch(function () { setPlaying(item, false); });
+      }
+
+      function stop(item) {
+        const video = item.querySelector('video');
+        if (!video) return;
+        video.pause();
+        if (!video.dataset.audio) video.muted = true;
+      }
+
+      items.forEach(function (item) {
+        const video = item.querySelector('video');
+        const frame = item.querySelector('.poster-frame');
+        if (!video || !frame) return;
+
+        frame.addEventListener('click', function () {
+          if (video.paused) start(item, true);
+          else {
+            video.pause();
+            delete video.dataset.audio;   // 手动暂停即视为结束有声播放
+            video.muted = true;
+          }
+        });
+
+        if (HOVER_PREVIEW) {
+          frame.addEventListener('mouseenter', function () {
+            if (!video.paused) return;              // 已在放（可能带声音）就不动它
+            if (video.dataset.audio) return;        // 用户按暂停的，别自动续播
+            start(item, false);
+          });
+          frame.addEventListener('mouseleave', function () {
+            if (video.dataset.audio) return;        // 有声播放不因移开鼠标中断
+            if (!video.paused) video.pause();
+          });
+        }
+
+        video.addEventListener('play',  function () { setPlaying(item, true);  });
+        video.addEventListener('pause', function () {
+          setPlaying(item, false);
+          if (!video.dataset.audio) video.muted = true;
+        });
+      });
+
+      // 滚出视口就停，避免同屏多支一起跑
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) return;
+            const v = en.target.querySelector('video');
+            if (v && !v.paused) {
+              v.pause();
+              if (!v.dataset.audio) v.muted = true;
+            }
+          });
+        }, { threshold: 0.25 });
+        items.forEach(function (it) { io.observe(it); });
+      }
+    })();
 
     // ============ 墨绿丝绸短尾鼠标特效（仅桌面端） ============
   (function initSilkCursor() {
